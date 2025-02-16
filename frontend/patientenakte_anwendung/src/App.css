@@ -1,38 +1,58 @@
-.App {
-  text-align: center;
+.app-container {
+  display: grid;
+  grid-template-columns: 1fr minmax(1000px, 3fr) 1fr; /* 1fr links, 3fr Mitte, 1fr rechts */
+  grid-template-rows: auto 1fr auto; /* Header, Main, Footer */
+  grid-template-areas:
+    "left header right"
+    "left main right"
+    "footer footer footer";
+  height: 100vh;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.header {
+  grid-area: header;
+  background: #007acc;
+  color: white;
+  align-items: center;
+  padding: 0 20px;
+  height: 100px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.left-space {
+  grid-area: left;
+  background: #f0f0f0;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.left-space-header {
+  grid-area: left;
+  height: 100px;
+  background: #007acc;
+}
+
+.main-content {
+  grid-area: main;
+  background: white;
+  padding: 20px;
   display: flex;
-  flex-direction: column;
+  justify-content: center; /* Zentriert den Inhalt horizontal */
+  min-width: 500px; /* Mindestbreite für Inhalte */
+}
+
+.right-space {
+  grid-area: right;
+  background: #f0f0f0;
+}
+.right-space-header {
+  grid-area: right;
+  height: 100px;
+  background: #007acc;
+}
+
+.footer {
+  grid-area: footer;
+  background: #007acc;
+  color: white;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }

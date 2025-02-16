@@ -1,0 +1,17 @@
+{
+  "publicKeys": [
+    {
+      "value": "asd",
+      "name": "dr. müller"
+    },
+    {
+      "value": "qwe",
+      "name": "dr. med. meier"
+    },
+    {
+      "value": "yxc",
+      "name": "dr. keller"
+    }
+  ]
+}
+
