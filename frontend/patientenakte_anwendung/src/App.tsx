@@ -3,7 +3,7 @@ import "./App.css";
 import Navbar from "./Components/Navbar/Navbar";
 import AppRoutes from "./Services/AppRoutes";
 import { useState } from "react";
-import { getContract } from "./contractConfig.js";
+//import { getContract } from "./contractConfig.ts";
 
 function App() {
 

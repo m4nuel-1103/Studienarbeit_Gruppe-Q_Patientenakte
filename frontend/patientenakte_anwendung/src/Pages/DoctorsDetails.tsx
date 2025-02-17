@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../Styles/DoctorsDetails.css";
 import { getDocuments } from "../Services/GetData";
-import { getContract } from "../contractConfig.js";
+import { getContract } from "../contractConfig";
 
 interface Doctor {
   name: string;
@@ -52,7 +52,10 @@ function DoctorDetails() {
 
   const handleShare = async () => {
     const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
-    const finalAccessCount = isUnlimitedAccess ? "0" : accessCount;
+    const finalAccessCount = isUnlimitedAccess ? "0" : accessCount.toString();
+
+
+
 
     console.log(
       `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
@@ -69,7 +72,7 @@ function DoctorDetails() {
 //       );
       const tx = await contract.grantMultiAccess(
         [value],
-        [parseInt(selectedDocument)],
+        [parseInt(selectedDocument ?? "0")],
         parseInt(finalExpiryDate),
         parseInt(finalAccessCount),
         isUnlimitedExpiry,
