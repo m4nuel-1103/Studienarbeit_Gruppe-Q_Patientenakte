@@ -1,2 +1,5 @@
 contracts/artifacts
 .states
+node_modules
+contracts-test/node_modules
+frontend/patientenakte_anwendung/node_modules

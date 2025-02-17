@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../Styles/DoctorsDetails.css";
 import { getDocuments } from "../Services/GetData";
+import { getContract } from "../contractConfig.js";
 
 interface Doctor {
   name: string;
@@ -49,13 +50,41 @@ function DoctorDetails() {
     setIsUnlimitedAccess(false);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
     const finalAccessCount = isUnlimitedAccess ? "0" : accessCount;
 
     console.log(
       `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
     );
+    try {
+      // debugger;
+      const contract = await getContract();
+      console.log(contract);
+      if (!contract) return;
+//grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
+// debugger;      
+// const tx = await contract.hasAccess(
+//       2002
+//       );
+      const tx = await contract.grantMultiAccess(
+        [value],
+        [parseInt(selectedDocument)],
+        parseInt(finalExpiryDate),
+        parseInt(finalAccessCount),
+        isUnlimitedExpiry,
+        isUnlimitedAccess,
+        ["ENCRYPTED_AES_KEY"]
+      );
+      console.log(tx);
+      await tx.wait();
+
+      console.log(tx);
+      alert("Zugriff erfolgreich gespeichert!");
+    } catch (error) {
+      console.error("Fehler bei grantMultiAccess:", error);
+    }
+
     closeModal();
   };
 
