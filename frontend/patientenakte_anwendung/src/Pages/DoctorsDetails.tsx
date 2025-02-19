@@ -5,209 +5,301 @@ import { getDocuments } from "../Services/GetData";
 import { getContract } from "../contractConfig";
 
 interface Doctor {
-  name: string;
-  value: string;
+    name: string;
+    value: string;
 }
 
 function DoctorDetails() {
-  const { value } = useParams(); // Holt den PublicKey aus der URL
-  const location = useLocation();
-  const navigate = useNavigate();
+    const { value } = useParams(); // Holt den PublicKey aus der URL
+    const location = useLocation();
+    const navigate = useNavigate();
 
-  const doctorName = location.state?.doctor.name || "Unbekannt";
-  const allDoctors: Doctor[] = location.state?.allDoctors || [];
-  const validDoctor: Doctor | undefined = allDoctors.find(
-    (doctor: Doctor) => doctor.value === value
-  );
-
-  const sharedDocuments = ["Befundbericht", "Rezept", "Laborwerte"];
-  const allDocuments = getDocuments();
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
-  const [expiryDate, setExpiryDate] = useState<string>("");
-  const [accessCount, setAccessCount] = useState<number>(1);
-
-  const [isUnlimitedExpiry, setIsUnlimitedExpiry] = useState<boolean>(false);
-  const [isUnlimitedAccess, setIsUnlimitedAccess] = useState<boolean>(false);
-
-  const openModal = (documentName: string) => {
-    setSelectedDocument(documentName);
-    setExpiryDate(getTodayDate());
-    setIsModalOpen(true);
-  };
-
-  const getTodayDate = () => {
-    return new Date().toISOString().split("T")[0]; // Heutiges Datum im "YYYY-MM-DD"-Format
-  };
-
-  const closeModal = () => {
-    setSelectedDocument(null);
-    setIsModalOpen(false);
-    setExpiryDate("");
-    setAccessCount(1);
-    setIsUnlimitedExpiry(false);
-    setIsUnlimitedAccess(false);
-  };
-
-  const handleShare = async () => {
-    const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
-    const finalAccessCount = isUnlimitedAccess ? "0" : accessCount.toString();
-
-
-
-
-    console.log(
-      `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
+    // <<<<<<< HEAD
+    const doctorName = location.state?.doctor.name || "Unbekannt";
+    const allDoctors: Doctor[] = location.state?.allDoctors || [];
+    const validDoctor: Doctor | undefined = allDoctors.find(
+        (doctor: Doctor) => doctor.value === value
     );
-    try {
-      // debugger;
-      const contract = await getContract();
-      console.log(contract);
-      if (!contract) return;
-//grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
-// debugger;      
-// const tx = await contract.hasAccess(
-//       2002
-//       );
-      const tx = await contract.grantMultiAccess(
-        [value],
-        [parseInt(selectedDocument ?? "0")],
-        parseInt(finalExpiryDate),
-        parseInt(finalAccessCount),
-        isUnlimitedExpiry,
-        isUnlimitedAccess,
-        ["ENCRYPTED_AES_KEY"]
-      );
-      console.log(tx);
-      await tx.wait();
 
-      console.log(tx);
-      alert("Zugriff erfolgreich gespeichert!");
-    } catch (error) {
-      console.error("Fehler bei grantMultiAccess:", error);
-    }
+    const sharedDocuments = ["Befundbericht", "Rezept", "Laborwerte"];
+    const allDocuments = getDocuments();
 
-    closeModal();
-  };
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+    const [expiryDate, setExpiryDate] = useState<string>("");
+    const [accessCount, setAccessCount] = useState<number>(1);
 
-  useEffect(() => {
-    if (!validDoctor) {
-      navigate("/doctors", { replace: true });
-    }
-  }, [validDoctor, navigate]);
+    const [isUnlimitedExpiry, setIsUnlimitedExpiry] = useState<boolean>(false);
+    const [isUnlimitedAccess, setIsUnlimitedAccess] = useState<boolean>(false);
 
-  return (
-    <div className="doctorsDetails-container">
-      {/* Linker Bereich: Arzt-Informationen */}
-      <div className="doctorsDetails-left">
-        <h2>Arzt-Details</h2>
-        <p>
-          <strong>Name:</strong> {doctorName}
-        </p>
-        <p>
-          <strong>PublicKey:</strong> {value}
-        </p>
-      </div>
+    const openModal = (documentName: string) => {
+        setSelectedDocument(documentName);
+        setExpiryDate(getTodayDate());
+        setIsModalOpen(true);
+    };
 
-      {/* Rechter Bereich: Weitere Infos */}
-      <div className="doctorsDetails-right">
-        <h3>Zusätzliche Informationen</h3>
-        <p>Hier könnten weitere Daten stehen.</p>
-      </div>
+    const getTodayDate = () => {
+        return new Date().toISOString().split("T")[0]; // Heutiges Datum im "YYYY-MM-DD"-Format
+    };
 
-      {/* Dokumentenbereich */}
-      <div className="doctorsDetails-documents-container">
-        <h3>Freigegebene Dokumente</h3>
-        {sharedDocuments.length > 0 ? (
-          <ul>
-            {sharedDocuments.map((doc, index) => (
-              <li key={index}>{doc}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>Keine freigegebenen Dokumente</p>
-        )}
+    const closeModal = () => {
+        setSelectedDocument(null);
+        setIsModalOpen(false);
+        setExpiryDate("");
+        setAccessCount(1);
+        setIsUnlimitedExpiry(false);
+        setIsUnlimitedAccess(false);
+    };
 
-        <h3>Alle Dokumente</h3>
-        {allDocuments.length > 0 ? (
-          <ul>
-            {allDocuments.map((doc, index) => (
-              <li
-                key={index}
-                className="document-item"
-                onClick={() => openModal(doc.name)}
-              >
-                {doc.name}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Keine Dokumente verfügbar</p>
-        )}
-      </div>
+    //   const handleShare = async () => {
+    //     const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
+    //     const finalAccessCount = isUnlimitedAccess ? "0" : accessCount.toString();
+    //
+    //
+    //
+    //
+    //     console.log(
+    //       `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
+    //     );
+    //     try {
+    //       // debugger;
+    //       const contract = await getContract();
+    //       console.log(contract);
+    //       if (!contract) return;
+    // //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
+    // // debugger;      
+    // // const tx = await contract.hasAccess(
+    // //       2002
+    // //       );
+    //       const tx = await contract.grantMultiAccess(
+    //         [value],
+    //         [parseInt(selectedDocument ?? "0")],
+    //         parseInt(finalExpiryDate),
+    //         parseInt(finalAccessCount),
+    //         isUnlimitedExpiry,
+    //         isUnlimitedAccess,
+    //         ["ENCRYPTED_AES_KEY"]
+    //       );
+    //       console.log(tx);
+    //       await tx.wait();
+    // // =======
+    // //     const doctorName = location.state?.doctor.name || "Unbekannt";
+    // //     const allDoctors: Doctor[] = location.state?.allDoctors || [];
+    // //     const validDoctor: Doctor | undefined = allDoctors.find(
+    // //         (doctor: Doctor) => doctor.value === value
+    // //     );
+    // // >>>>>>> main
 
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Dokument freigeben: {selectedDocument}</h3>
+    // const sharedDocuments = ["Befundbericht", "Rezept", "Laborwerte"];
+    // const allDocuments = getDocuments();
+    //
+    // const [isModalOpen, setIsModalOpen] = useState(false);
+    // const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+    // const [expiryDate, setExpiryDate] = useState<string>("");
+    // const [accessCount, setAccessCount] = useState<number>(1);
+    //
+    // const [isUnlimitedExpiry, setIsUnlimitedExpiry] = useState<boolean>(false);
+    // const [isUnlimitedAccess, setIsUnlimitedAccess] = useState<boolean>(false);
+    //
+    // const openModal = (documentName: string) => {
+    //     setSelectedDocument(documentName);
+    //     setExpiryDate(getTodayDate());
+    //     setIsModalOpen(true);
+    // };
+    //
+    // const getTodayDate = () => {
+    //     return new Date().toISOString().split("T")[0]; // Heutiges Datum im "YYYY-MM-DD"-Format
+    // };
+    //
+    // const closeModal = () => {
+    //     setSelectedDocument(null);
+    //     setIsModalOpen(false);
+    //     setExpiryDate("");
+    //     setAccessCount(1);
+    //     setIsUnlimitedExpiry(false);
+    //     setIsUnlimitedAccess(false);
+    // };
 
-            <div className="modal-input-group">
-              <label>Ablaufdatum:</label>
-              <div className="input-row">
-                <input
-                  type="date"
-                  value={expiryDate}
-                  onChange={(e) => setExpiryDate(e.target.value)}
-                  disabled={isUnlimitedExpiry}
-                />
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isUnlimitedExpiry}
-                    onChange={() => setIsUnlimitedExpiry(!isUnlimitedExpiry)}
-                  />
-                  Unbegrenzt
-                </label>
-              </div>
+    const handleShare = async () => {
+        const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
+        const finalAccessCount = isUnlimitedAccess ? "0" : accessCount;
+
+        console.log(
+            `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
+        );
+        try {
+            // debugger;
+            const contract = await getContract();
+            console.log(contract);
+            if (!contract) return;
+            //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
+            // debugger;      
+            // const tx2 = await contract.hasAccess(
+            //     2002
+            // );
+            // console.log(tx2);
+            // await tx2.wait();
+            // console.log(tx2);
+            const enc = new TextEncoder();
+            const doc_name_data = enc.encode(selectedDocument!);
+
+            const doc_hash = await window.crypto.subtle.digest("SHA-256", doc_name_data);
+            const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
+            const exp_date = new Date(finalExpiryDate);
+            const exp_date_u = BigInt((exp_date.getTime()) / 1000);
+
+            console.log([(value!)],
+                [app_hash],
+                (exp_date_u),
+                (finalAccessCount),
+                isUnlimitedExpiry,
+                isUnlimitedAccess,
+                ["ENCRYPTED_AES_KEY"]);
+            // console.log([value],
+            //     [app_hash],
+            //     exp_date_u,
+            //     finalAccessCount,
+            //     isUnlimitedExpiry,
+            //     isUnlimitedAccess,
+            //     ["ENCRYPTED_AES_KEY"]);
+            const tx = await contract.grantMultiAccess(
+                [(value!)],
+                [app_hash],
+                exp_date_u,
+                finalAccessCount,
+                isUnlimitedExpiry,
+                isUnlimitedAccess,
+                ["ENCRYPTED_AES_KEY"]
+            );
+            console.log(tx);
+            await tx.wait();
+
+            console.log(tx);
+            alert("Zugriff erfolgreich gespeichert!");
+        } catch (error) {
+            console.error("Fehler bei grantMultiAccess:", error);
+        }
+
+        closeModal();
+    };
+
+    useEffect(() => {
+        if (!validDoctor) {
+            navigate("/doctors", { replace: true });
+        }
+    }, [validDoctor, navigate]);
+
+    return (
+        <div className="doctorsDetails-container">
+            {/* Linker Bereich: Arzt-Informationen */}
+            <div className="doctorsDetails-left">
+                <h2>Arzt-Details</h2>
+                <p>
+                    <strong>Name:</strong> {doctorName}
+                </p>
+                <p>
+                    <strong>PublicKey:</strong> {value}
+                </p>
             </div>
 
-            {/* Anzahl der Zugriffe mit Checkbox */}
-            <div className="modal-input-group">
-              <label>Anzahl der Zugriffe:</label>
-              <div className="input-row">
-                <input
-                  type="number"
-                  min="1"
-                  value={accessCount}
-                  onChange={(e) => setAccessCount(Number(e.target.value))}
-                  disabled={isUnlimitedAccess}
-                />
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isUnlimitedAccess}
-                    onChange={() => setIsUnlimitedAccess(!isUnlimitedAccess)}
-                  />
-                  Unbegrenzt
-                </label>
-              </div>
+            {/* Rechter Bereich: Weitere Infos */}
+            <div className="doctorsDetails-right">
+                <h3>Zusätzliche Informationen</h3>
+                <p>Hier könnten weitere Daten stehen.</p>
             </div>
 
-            {/* Buttons */}
-            <div className="modal-buttons">
-              <button onClick={handleShare} className="share-btn">
-                Freigeben
-              </button>
-              <button onClick={closeModal} className="cancel-btn">
-                Abbrechen
-              </button>
+            {/* Dokumentenbereich */}
+            <div className="doctorsDetails-documents-container">
+                <h3>Freigegebene Dokumente</h3>
+                {sharedDocuments.length > 0 ? (
+                    <ul>
+                        {sharedDocuments.map((doc, index) => (
+                            <li key={index}>{doc}</li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>Keine freigegebenen Dokumente</p>
+                )}
+
+                <h3>Alle Dokumente</h3>
+                {allDocuments.length > 0 ? (
+                    <ul>
+                        {allDocuments.map((doc, index) => (
+                            <li
+                                key={index}
+                                className="document-item"
+                                onClick={() => openModal(doc.name)}
+                            >
+                                {doc.name}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>Keine Dokumente verfügbar</p>
+                )}
             </div>
-          </div>
+
+            {isModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Dokument freigeben: {selectedDocument}</h3>
+
+                        <div className="modal-input-group">
+                            <label>Ablaufdatum:</label>
+                            <div className="input-row">
+                                <input
+                                    type="date"
+                                    value={expiryDate}
+                                    onChange={(e) => setExpiryDate(e.target.value)}
+                                    disabled={isUnlimitedExpiry}
+                                />
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={isUnlimitedExpiry}
+                                        onChange={() => setIsUnlimitedExpiry(!isUnlimitedExpiry)}
+                                    />
+                                    Unbegrenzt
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Anzahl der Zugriffe mit Checkbox */}
+                        <div className="modal-input-group">
+                            <label>Anzahl der Zugriffe:</label>
+                            <div className="input-row">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={accessCount}
+                                    onChange={(e) => setAccessCount(Number(e.target.value))}
+                                    disabled={isUnlimitedAccess}
+                                />
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={isUnlimitedAccess}
+                                        onChange={() => setIsUnlimitedAccess(!isUnlimitedAccess)}
+                                    />
+                                    Unbegrenzt
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="modal-buttons">
+                            <button onClick={handleShare} className="share-btn">
+                                Freigeben
+                            </button>
+                            <button onClick={closeModal} className="cancel-btn">
+                                Abbrechen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 }
 
 export default DoctorDetails;
