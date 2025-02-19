@@ -14,7 +14,6 @@ function DoctorDetails() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // <<<<<<< HEAD
     const doctorName = location.state?.doctor.name || "Unbekannt";
     const allDoctors: Doctor[] = location.state?.allDoctors || [];
     const validDoctor: Doctor | undefined = allDoctors.find(
@@ -51,75 +50,6 @@ function DoctorDetails() {
         setIsUnlimitedAccess(false);
     };
 
-    //   const handleShare = async () => {
-    //     const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
-    //     const finalAccessCount = isUnlimitedAccess ? "0" : accessCount.toString();
-    //
-    //
-    //
-    //
-    //     console.log(
-    //       `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
-    //     );
-    //     try {
-    //       // debugger;
-    //       const contract = await getContract();
-    //       console.log(contract);
-    //       if (!contract) return;
-    // //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
-    // // debugger;      
-    // // const tx = await contract.hasAccess(
-    // //       2002
-    // //       );
-    //       const tx = await contract.grantMultiAccess(
-    //         [value],
-    //         [parseInt(selectedDocument ?? "0")],
-    //         parseInt(finalExpiryDate),
-    //         parseInt(finalAccessCount),
-    //         isUnlimitedExpiry,
-    //         isUnlimitedAccess,
-    //         ["ENCRYPTED_AES_KEY"]
-    //       );
-    //       console.log(tx);
-    //       await tx.wait();
-    // // =======
-    // //     const doctorName = location.state?.doctor.name || "Unbekannt";
-    // //     const allDoctors: Doctor[] = location.state?.allDoctors || [];
-    // //     const validDoctor: Doctor | undefined = allDoctors.find(
-    // //         (doctor: Doctor) => doctor.value === value
-    // //     );
-    // // >>>>>>> main
-
-    // const sharedDocuments = ["Befundbericht", "Rezept", "Laborwerte"];
-    // const allDocuments = getDocuments();
-    //
-    // const [isModalOpen, setIsModalOpen] = useState(false);
-    // const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
-    // const [expiryDate, setExpiryDate] = useState<string>("");
-    // const [accessCount, setAccessCount] = useState<number>(1);
-    //
-    // const [isUnlimitedExpiry, setIsUnlimitedExpiry] = useState<boolean>(false);
-    // const [isUnlimitedAccess, setIsUnlimitedAccess] = useState<boolean>(false);
-    //
-    // const openModal = (documentName: string) => {
-    //     setSelectedDocument(documentName);
-    //     setExpiryDate(getTodayDate());
-    //     setIsModalOpen(true);
-    // };
-    //
-    // const getTodayDate = () => {
-    //     return new Date().toISOString().split("T")[0]; // Heutiges Datum im "YYYY-MM-DD"-Format
-    // };
-    //
-    // const closeModal = () => {
-    //     setSelectedDocument(null);
-    //     setIsModalOpen(false);
-    //     setExpiryDate("");
-    //     setAccessCount(1);
-    //     setIsUnlimitedExpiry(false);
-    //     setIsUnlimitedAccess(false);
-    // };
-
     const handleShare = async () => {
         const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
         const finalAccessCount = isUnlimitedAccess ? "0" : accessCount;
@@ -128,18 +58,9 @@ function DoctorDetails() {
             `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
         );
         try {
-            // debugger;
             const contract = await getContract();
             console.log(contract);
             if (!contract) return;
-            //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
-            // debugger;      
-            // const tx2 = await contract.hasAccess(
-            //     2002
-            // );
-            // console.log(tx2);
-            // await tx2.wait();
-            // console.log(tx2);
             const enc = new TextEncoder();
             const doc_name_data = enc.encode(selectedDocument!);
 
@@ -155,13 +76,7 @@ function DoctorDetails() {
                 isUnlimitedExpiry,
                 isUnlimitedAccess,
                 ["ENCRYPTED_AES_KEY"]);
-            // console.log([value],
-            //     [app_hash],
-            //     exp_date_u,
-            //     finalAccessCount,
-            //     isUnlimitedExpiry,
-            //     isUnlimitedAccess,
-            //     ["ENCRYPTED_AES_KEY"]);
+            //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
             const tx = await contract.grantMultiAccess(
                 [(value!)],
                 [app_hash],
