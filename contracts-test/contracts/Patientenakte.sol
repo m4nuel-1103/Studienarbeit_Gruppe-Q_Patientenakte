@@ -67,7 +67,7 @@ contract Patientenakte {
         }
     }
 
-    function hasAccess(uint256 _documentID) external returns (bool) {//Testfunktion hab ich zugriff?
+    function hasAccess(uint256 _documentID) public view returns (bool) {//Testfunktion hab ich zugriff? früher public view statt external
         Access memory access = accessList[msg.sender][_documentID];
         if (access.expiresAt == 0 && access.remainingUses==0 && !access.expiresFlag&& !access.usesFlag){
             //Es wurde kein Eintrag gefunden also false

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../Styles/DoctorsDetails.css";
 import { getDocuments } from "../Services/GetData";
-import { getContract } from "../contractConfig.js";
+import { getContract } from "../contractConfig";
 
 interface Doctor {
     name: string;
@@ -58,18 +58,9 @@ function DoctorDetails() {
             `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
         );
         try {
-            // debugger;
-            const contract = await getContract();
+            const {contract,signer} = await getContract(); //signer falls man ihn mal braucht
             console.log(contract);
             if (!contract) return;
-            //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
-            // debugger;      
-            // const tx2 = await contract.hasAccess(
-            //     2002
-            // );
-            // console.log(tx2);
-            // await tx2.wait();
-            // console.log(tx2);
             const enc = new TextEncoder();
             const doc_name_data = enc.encode(selectedDocument!);
 
@@ -85,13 +76,7 @@ function DoctorDetails() {
                 isUnlimitedExpiry,
                 isUnlimitedAccess,
                 ["ENCRYPTED_AES_KEY"]);
-            // console.log([value],
-            //     [app_hash],
-            //     exp_date_u,
-            //     finalAccessCount,
-            //     isUnlimitedExpiry,
-            //     isUnlimitedAccess,
-            //     ["ENCRYPTED_AES_KEY"]);
+            //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
             const tx = await contract.grantMultiAccess(
                 [(value!)],
                 [app_hash],
@@ -112,7 +97,33 @@ function DoctorDetails() {
 
         closeModal();
     };
+    
+    const hasAccess= async() => {//Bisher nur staatische Testfunktion
+        try{
+            const teststring = "document1";
+            const enc = new TextEncoder();
+            const testEntcode = enc.encode(teststring!);
+            const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
+            const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
+            const {contract, signer} = await getContract();
+            console.log(contract);
+            console.log("Has Access Signer",signer.address);
+            if (!contract|| !signer) return;
+            
+            
+            
+            
+            const tx = await contract.hasAccess(app_hash!);
+            console.log("Has access: ",tx);
+            //await tx.wait();
 
+            //console.log(tx.value);
+            alert("Has Access erfolgreich!");
+        }catch (error) {
+            console.error("Fehler bei hasAccess:", error);
+        }
+    
+    }
     useEffect(() => {
         if (!validDoctor) {
             navigate("/doctors", { replace: true });
@@ -136,6 +147,8 @@ function DoctorDetails() {
             <div className="doctorsDetails-right">
                 <h3>Zusätzliche Informationen</h3>
                 <p>Hier könnten weitere Daten stehen.</p>
+                {/* Testbutton für Access*/}
+                <button onClick={hasAccess}>Has Access Test </button>
             </div>
 
             {/* Dokumentenbereich */}
