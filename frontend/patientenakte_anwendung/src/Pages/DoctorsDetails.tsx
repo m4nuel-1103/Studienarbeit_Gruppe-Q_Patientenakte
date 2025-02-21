@@ -58,7 +58,7 @@ function DoctorDetails() {
             `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
         );
         try {
-            const contract = await getContract();
+            const {contract,signer} = await getContract(); //signer falls man ihn mal braucht
             console.log(contract);
             if (!contract) return;
             const enc = new TextEncoder();
@@ -97,7 +97,33 @@ function DoctorDetails() {
 
         closeModal();
     };
+    
+    const hasAccess= async() => {//Bisher nur staatische Testfunktion
+        try{
+            const teststring = "document1";
+            const enc = new TextEncoder();
+            const testEntcode = enc.encode(teststring!);
+            const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
+            const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
+            const {contract, signer} = await getContract();
+            console.log(contract);
+            console.log("Has Access Signer",signer.address);
+            if (!contract|| !signer) return;
+            
+            
+            
+            
+            const tx = await contract.hasAccess(app_hash!);
+            console.log("Has access: ",tx);
+            //await tx.wait();
 
+            //console.log(tx.value);
+            alert("Has Access erfolgreich!");
+        }catch (error) {
+            console.error("Fehler bei hasAccess:", error);
+        }
+    
+    }
     useEffect(() => {
         if (!validDoctor) {
             navigate("/doctors", { replace: true });
@@ -121,6 +147,8 @@ function DoctorDetails() {
             <div className="doctorsDetails-right">
                 <h3>Zusätzliche Informationen</h3>
                 <p>Hier könnten weitere Daten stehen.</p>
+                {/* Testbutton für Access*/}
+                <button onClick={hasAccess}>Has Access Test </button>
             </div>
 
             {/* Dokumentenbereich */}
