@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.28;
 
 contract Patientenakte {
     address public patient; //entspricht dem Owner des Vertrags
@@ -115,6 +115,8 @@ contract Patientenakte {
              //zeitlich begrenzt
              //Anzahl zugriffe beschraenkt
         }
+        emit AccessUsed(msg.sender, _documentID,  access.expiresAt,  access.remainingUses);
+ 
         return access.encryptedKey;
     }
 
