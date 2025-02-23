@@ -1,3 +1,11 @@
+/* Globale Farben im :root definieren */
+:root {
+  --primary-color-p: #007acc;   /* Patient */
+  --primary-color-d: #df5252;   /* Arzt */
+  --primary-color: var(--primary-color-p); /* Standardwert */
+}
+
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

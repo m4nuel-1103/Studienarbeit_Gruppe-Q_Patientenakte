@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import "../Styles/DoctorsDetails.css";
-import { getDocuments } from "../Services/GetData";
-import { getContract } from "../contractConfig";
+import "../../Styles/DoctorsDetails.css";
+import { getDocuments } from "../../Services/GetData";
+import { getContract } from "../../contractConfig";
 
 interface Doctor {
     name: string;
@@ -59,6 +59,7 @@ function DoctorDetails() {
         );
         try {
             const {contract,signer} = await getContract(); //signer falls man ihn mal braucht
+            console.log(signer);
             console.log(contract);
             if (!contract) return;
             const enc = new TextEncoder();
@@ -107,7 +108,7 @@ function DoctorDetails() {
             const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
             const {contract, signer} = await getContract();
             console.log(contract);
-            console.log("Has Access Signer",signer.address);
+            // console.log("Has Access Signer",signer.address);
             if (!contract|| !signer) return;
             
             
