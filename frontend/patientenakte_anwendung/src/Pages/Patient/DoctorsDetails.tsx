@@ -58,7 +58,7 @@ function DoctorDetails() {
             `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
         );
         try {
-            const {contract,signer} = await getContract(); //signer falls man ihn mal braucht
+            const {contract,signer} = await getContract("patientenakte"); //signer falls man ihn mal braucht
             console.log(signer);
             console.log(contract);
             if (!contract) return;
@@ -106,17 +106,20 @@ function DoctorDetails() {
             const testEntcode = enc.encode(teststring!);
             const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
             const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
-            const {contract, signer} = await getContract();
+            console.log("🔹 Berechneter Document Hash (app_hash):",app_hash);
+            const {contract, signer} = await getContract("patientenakte");
             console.log(contract);
             // console.log("Has Access Signer",signer.address);
             if (!contract|| !signer) return;
+            const allAccess = await contract.accessList(await signer.getAddress(), app_hash);
+            console.log("🔹 Zugriffseintrag:", allAccess);
+            //const result = await contract.callStatic.hasAccess(1149696269n);
+            //console.log("Zugriffserlaubnis Static: ",result);
             
-            
-            
-            
-            const tx = await contract.hasAccess(app_hash!);
+            const tx = await contract.hasAccess(1149696269);
             console.log("Has access: ",tx);
             //await tx.wait();
+            
 
             //console.log(tx.value);
             alert("Has Access erfolgreich!");

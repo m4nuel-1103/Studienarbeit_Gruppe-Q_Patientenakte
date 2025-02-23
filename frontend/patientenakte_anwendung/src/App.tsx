@@ -4,6 +4,7 @@ import Navbar from "./Components/Navbar/Navbar";
 import DoctorRoutes from "./Services/DoctorRoutes";
 import PatientRoutes from "./Services/PatientRoutes";
 import { useEffect, useState } from "react";
+import { getContract } from "./contractConfig";
 
 const App = () => {
   const [isDoc, setIsDoc] = useState(false); // Default role: Patient
@@ -13,6 +14,24 @@ const App = () => {
   const toggleRole = () => {
     setIsDoc(!isDoc);
   };
+
+  //CreateWallet später wo anders hin
+  const createWallet = async () => {
+try {
+            const {contract,signer} = await getContract("fabrikPatientenakte"); //signer falls man ihn mal braucht
+            console.log(signer);
+            console.log(contract);
+            if(!contract) return;
+            const tx = await contract.createNewPatientenakte();
+            await tx.wait();
+            console.log(tx);
+            alert("Patientenakte erstellt!");
+            console.log("Patientenakte erstellt!", tx.to);
+  }
+  catch (error) {
+    console.error("Fehler beim ERstellen der Patientenakte:", error);
+  }
+}
 
   // Connect to MetaMask
   const connectWallet = async () => {
@@ -102,6 +121,12 @@ const App = () => {
               className="px-4 py-2 bg-blue-500 text-white rounded-lg"
             >
               Mit MetaMask verbinden
+            </button>
+            <button //Hier hab ich dir mal wieder reingepfuscht SORRY
+              onClick={createWallet}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+            >
+              Erstelle Wallet
             </button>
           </div>
         )}
