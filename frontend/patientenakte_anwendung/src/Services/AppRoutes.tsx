@@ -1,20 +1,15 @@
-// ./Services/Router.jsx
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Doctors from '../Pages/Doctors';
-import NotFound from '../Pages/NotFound';
-import Home from '../Pages/Home';
-import DoctorsDetails from '../Pages/DoctorsDetails';
+import { Routes, Route } from "react-router-dom";
+import Home from "../Pages/Home";
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Navigate to="/home" replace />} />
-    
-    <Route path="/home" element={<Home />} />
-    <Route path="/doctors" element={<Doctors />} />
-    <Route path="/doctors/:value" element={<DoctorsDetails />} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+import NotFound from "../Pages/NotFound";
+
+const AppRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="*" element={<NotFound />} /> {/* 404-Fehlerseite */}
+    </Routes>
+  );
+}
 
 export default AppRoutes;
-

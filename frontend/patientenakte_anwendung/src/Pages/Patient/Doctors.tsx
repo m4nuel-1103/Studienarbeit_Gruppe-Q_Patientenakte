@@ -1,6 +1,6 @@
 import { useState } from "react";
-import "../Styles/Doctors.css";
-import { getPublicKeys } from "../Services/GetData";
+import "../../Styles/Doctors.css";
+import { getPublicKeys } from "../../Services/GetData";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 

@@ -11,7 +11,7 @@
 
 .header {
   grid-area: header;
-  background: #007acc;
+  background-color: var(--primary-color);
   color: white;
   align-items: center;
   padding: 0 20px;
@@ -26,7 +26,7 @@
 .left-space-header {
   grid-area: left;
   height: 100px;
-  background: #007acc;
+  background-color: var(--primary-color);
 }
 
 .main-content {
@@ -45,12 +45,12 @@
 .right-space-header {
   grid-area: right;
   height: 100px;
-  background: #007acc;
+  background-color: var(--primary-color);
 }
 
 .footer {
   grid-area: footer;
-  background: #007acc;
+  background-color: var(--primary-color);
   color: white;
   display: flex;
   align-items: center;
