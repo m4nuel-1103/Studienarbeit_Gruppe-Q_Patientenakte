@@ -5,3 +5,4 @@ contracts-test/node_modules
 frontend/patientenakte_anwendung/node_modules
 contracts-test/artifacts
 contracts-test/cache
+frontend/patientenakte_anwendung/src/Patientenakte.json

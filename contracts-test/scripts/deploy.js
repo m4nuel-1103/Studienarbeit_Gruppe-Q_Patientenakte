@@ -3,7 +3,7 @@ const hre = require("hardhat");
 async function main() {
     const Patientenakte = await hre.ethers.getContractFactory("Patientenakte");
     //console.log(Patientenakte);
-    const ownAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+    const ownAddress = "0x71089Ba41e478702e1904692385Be3972B2cBf9e";
     console.log("owa", ownAddress);
     const patientenakte = await Patientenakte.deploy(ownAddress);
     //console.log(patientenakte);
