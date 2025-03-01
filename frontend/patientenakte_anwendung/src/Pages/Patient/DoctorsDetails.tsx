@@ -99,7 +99,7 @@ function DoctorDetails() {
         closeModal();
     };
     
-    const hasAccess= async() => {//Bisher nur staatische Testfunktion
+    const hasAccess= async() => {//Bisher nur statische Testfunktion
         try{
             const teststring = "document1";
             const enc = new TextEncoder();
@@ -128,6 +128,29 @@ function DoctorDetails() {
         }
     
     }
+
+    const revokeAccess = async (docName: string) => {
+        try {
+            const { contract, signer } = await getContract("patientenakte");
+            if (!contract) return;
+    
+            const enc = new TextEncoder();
+            const docNameData = enc.encode(docName);
+            const docHash = await window.crypto.subtle.digest("SHA-256", docNameData);
+            const appHash = BigInt(new Uint32Array(docHash)[0]);
+    
+            console.log(`⛔ Dokument "${docName}" wird für ${value} entzogen...`);
+    
+            const tx = await contract.revokeAccess(value, appHash);
+            await tx.wait();
+    
+            alert(`Zugriff auf "${docName}" erfolgreich entfernt.`);
+        } catch (error) {
+            console.error("Fehler bei revokeAccess:", error);
+            alert("Fehler beim Entfernen der Freigabe.");
+        }
+    };
+    
     useEffect(() => {
         if (!validDoctor) {
             navigate("/doctors", { replace: true });
@@ -157,16 +180,25 @@ function DoctorDetails() {
 
             {/* Dokumentenbereich */}
             <div className="doctorsDetails-documents-container">
-                <h3>Freigegebene Dokumente</h3>
-                {sharedDocuments.length > 0 ? (
-                    <ul>
-                        {sharedDocuments.map((doc, index) => (
-                            <li key={index}>{doc}</li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>Keine freigegebenen Dokumente</p>
-                )}
+            <h3>Freigegebene Dokumente</h3>
+            {sharedDocuments.length > 0 ? (
+                <ul className="shared-documents-list">
+                    {sharedDocuments.map((doc, index) => (
+                        <li key={index}>
+                            <span>{doc}</span> {/* Document name on the left */}
+                            <button 
+                                className="revoke-button"
+                                onClick={() => revokeAccess(doc)}
+                            >
+                                🗑️ Entfernen
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p>Keine freigegebenen Dokumente</p>
+            )}
+
 
                 <h3>Alle Dokumente</h3>
                 {allDocuments.length > 0 ? (
