@@ -28,7 +28,7 @@ router.get('/', async () => {
 router.get('/patients', [PatientsController, "index"])
 router.post('/patients', [PatientsController, "store"])
 router.get('/patients/:id', [PatientsController, "show"])
-router.get('/patients/doctor/:id', [PatientsController, "forDoctor"])
+router.get('/patients_doctor/:id', [PatientsController, "forDoctor"])
 router.delete('/patients/:id', [PatientsController, "delete"])
 
 router.get('/doctors', [DoctorsController, "index"])

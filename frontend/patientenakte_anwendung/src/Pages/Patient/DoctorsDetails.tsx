@@ -1,35 +1,47 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../../Styles/DoctorsDetails.css";
-import { getDocuments } from "../../Services/GetData";
+// import { getDocuments } from "../../Services/GetData";
 import { getContract } from "../../contractConfig";
-import { doctors } from '../../db/schema';
+import { doctors, documents } from '../../db/schema';
 
+type DoctorDetailsProps = {
+    patientAddress: string;
+};
 
-function DoctorDetails() {
+function DoctorDetails(props: DoctorDetailsProps) {
     const { value } = useParams(); // Holt den PublicKey aus der URL
     const location = useLocation();
     const navigate = useNavigate();
 
     const doctorName = location.state?.doctor.name || "Unbekannt";
-    const allDoctors: typeof doctors.$inferInsert[] = location.state?.allDoctors || [];
-    const validDoctor: typeof doctors.$inferInsert | undefined = allDoctors.find(
-        (doctor: typeof doctors.$inferInsert) => doctor.id === value
+    const allDoctors: typeof doctors.$inferSelect[] = location.state?.allDoctors || [];
+    const validDoctor: typeof doctors.$inferSelect | undefined = allDoctors.find(
+        (doctor: typeof doctors.$inferSelect) => doctor.id === value
     );
 
     const sharedDocuments = ["Befundbericht", "Rezept", "Laborwerte"];
-    const allDocuments = getDocuments();
+    const [allDocuments, setDocuments] = useState<typeof documents.$inferSelect[]>([]);
+    useEffect(() => {
+        fetch(`/api/documents/patient/${props.patientAddress}`)
+            .then((r) => r.json())
+            .then((data) => {
+                console.log(data);
+                setDocuments(data);
+            });
+    }, []);
+    // const allDocuments = getDocuments();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+    const [selectedDocument, setSelectedDocument] = useState<typeof documents.$inferSelect | null>(null);
     const [expiryDate, setExpiryDate] = useState<string>("");
     const [accessCount, setAccessCount] = useState<number>(1);
 
     const [isUnlimitedExpiry, setIsUnlimitedExpiry] = useState<boolean>(false);
     const [isUnlimitedAccess, setIsUnlimitedAccess] = useState<boolean>(false);
 
-    const openModal = (documentName: string) => {
-        setSelectedDocument(documentName);
+    const openModal = (document: typeof documents.$inferSelect) => {
+        setSelectedDocument(document);
         setExpiryDate(getTodayDate());
         setIsModalOpen(true);
     };
@@ -50,6 +62,10 @@ function DoctorDetails() {
     const handleShare = async () => {
         const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
         const finalAccessCount = isUnlimitedAccess ? "0" : accessCount;
+        if (selectedDocument === null || selectedDocument === undefined) {
+            console.log("trying to share null doc");
+            return;
+        }
 
         console.log(
             `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
@@ -59,16 +75,16 @@ function DoctorDetails() {
             console.log(signer);
             console.log(contract);
             if (!contract) return;
-            const enc = new TextEncoder();
-            const doc_name_data = enc.encode(selectedDocument!);
-
-            const doc_hash = await window.crypto.subtle.digest("SHA-256", doc_name_data);
-            const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
+            // const enc = new TextEncoder();
+            // const doc_name_data = enc.encode(selectedDocument!);
+            //
+            // const doc_hash = await window.crypto.subtle.digest("SHA-256", doc_name_data);
+            // const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
             const exp_date = new Date(finalExpiryDate);
             const exp_date_u = BigInt((exp_date.getTime()) / 1000);
 
             console.log([(value!)],
-                [app_hash],
+                [selectedDocument?.id],
                 (exp_date_u),
                 (finalAccessCount),
                 isUnlimitedExpiry,
@@ -172,7 +188,7 @@ function DoctorDetails() {
                             <li
                                 key={index}
                                 className="document-item"
-                                onClick={() => openModal(doc.name)}
+                                onClick={() => openModal(doc.id)}
                             >
                                 {doc.name}
                             </li>

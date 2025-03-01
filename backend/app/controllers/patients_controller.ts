@@ -11,6 +11,7 @@ export default class PatientsController {
   }
 
   public async forDoctor({ params, response }: HttpContext) {
+    console.log(params);
     const result = await DatabaseService
       .getDb()
       .select()
@@ -22,6 +23,7 @@ export default class PatientsController {
   }
 
   public async show({ params, response }: HttpContext) {
+    console.log(params);
     const result = await DatabaseService
       .getDb()
       .select()
@@ -36,6 +38,7 @@ export default class PatientsController {
   }
 
   public async delete({ params, response }: HttpContext) {
+    console.log(params);
     await DatabaseService.getDb().delete(patients).where(eq(patients.id, params.id));
     return response.ok({ success: true });
   }
