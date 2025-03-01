@@ -3,7 +3,7 @@ import abiPatientenakte from "./Patientenakte.json"; // Stelle sicher, dass `res
 import abiFabrikPatientenakte from "./FabrikPatientenakte.json"; // Stelle sicher, dass `resolveJsonModule` aktiviert ist
 
 // Adresse des Smart Contracts (ersetze mit der tatsächlichen Adresse)
-const FABRIK_CONTRACT_ADDRESS: string = "0x262e2b50219620226C5fB5956432A88fffd94Ba7";
+const FABRIK_CONTRACT_ADDRESS: string = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 // Globales Fensterobjekt um `ethereum` zu typisieren
 declare global {
@@ -24,6 +24,15 @@ export const getContract = async (
     alert("Bitte installiere MetaMask!");
     return {contract: null, signer: null};
   }
+  //Temporärer Workaround für MetaMask-Verbindung auf Static
+  /*const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");  // Verwende den lokalen Hardhat-Node
+  const signer = new ethers.Wallet("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", provider);  // Ersetze durch deinen privaten Schlüssel
+
+  
+
+  const contract = new ethers.Contract(FABRIK_CONTRACT_ADDRESS, abiFabrikPatientenakte.abi, signer);
+  return { contract, signer };
+};*/
 
   try {
     // Verwende window.ethereum direkt als Eip1193Provider
@@ -45,7 +54,7 @@ export const getContract = async (
       const patientenakteAddress = await fabrikContract.getPatientenakte(userAddress);
       console.log("Patientenakte Adresse:", patientenakteAddress);
 
-      if(!patientenakteAddress || patientenakteAddress === ethers.constants.AddressZero) {
+      if(!patientenakteAddress) {
         alert("Du hast noch keine Patientenakte erstellt!");
         //Hier später automatisch erstellen lassen
         return {contract: null, signer: null};
@@ -53,7 +62,10 @@ export const getContract = async (
       console.log("Patientenakte Adresse verifiziert:", patientenakteAddress);
 
       contract = new ethers.Contract(patientenakteAddress, abiPatientenakte.abi, signer);
-
+      console.log("👂 Höre auf Events von:", patientenakteAddress);
+      const filter = contract.filters.AccessGranted();
+      const events = await contract.queryFilter(filter);
+      console.log("🔍 Gefundene Events:", events);
       contract.on("AccessGranted", (doctor: bigint, docID: bigint, _expiresAt: bigint, _remainingUses: bigint, _expiresFlag: boolean, _usesFlag: boolean) => {
         console.log("Event ausgelöst!");
         console.log("Patient:", doctor);

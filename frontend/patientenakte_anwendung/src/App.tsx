@@ -17,22 +17,43 @@ const App = () => {
 
   //CreateWallet später wo anders hin
   const createWallet = async () => {
-try {
-            const {contract,signer} = await getContract("fabrikPatientenakte"); //signer falls man ihn mal braucht
-            console.log(signer);
-            console.log(contract);
-            if(!contract) return;
-            const tx = await contract.createNewPatientenakte();
-            await tx.wait();
-            console.log(tx);
-            alert("Patientenakte erstellt!");
-            console.log("Patientenakte erstellt!", tx.to);
+    try {
+      const { contract, signer } = await getContract("fabrikPatientenakte"); //signer falls man ihn mal braucht
+      console.log(signer);
+      console.log(contract);
+      
+      if (!contract) return;
+     
+      const tx = await contract.createNewPatientenakte();
+      await tx.wait();
+      console.log(tx);
+      alert("Patientenakte erstellt!");
+    }
+    catch (error) {
+      console.error("Fehler beim ERstellen der Patientenakte:", error);
+    }
+  }
+ //CreateWallet später wo anders hin
+ const checkWallet = async () => {
+  try {
+    const { contract, signer } = await getContract("fabrikPatientenakte"); //signer falls man ihn mal braucht
+    console.log(signer);
+    console.log(contract);
+    if (!contract|| !signer) return;
+    
+    const patientenAdresse=await signer.getAddress()
+    console.log("Wallet-Adresse: ",patientenAdresse);
+    console.log("Contract-Adresse:", contract?.target);
+    console.log("Verfügbare Methoden:", contract.interface.fragments.map(f => f.name));
+    console.log("Contract ABI:", contract?.interface.fragments);
+
+    const tx=await contract.getPatientenakte(patientenAdresse);
+    console.log("Patientenakte-Adresse: ",tx);
   }
   catch (error) {
-    console.error("Fehler beim ERstellen der Patientenakte:", error);
+    console.error("Fehler beim Abruf der Patientenakte:", error);
   }
 }
-
   // Connect to MetaMask
   const connectWallet = async () => {
     if (!window.ethereum) {
@@ -127,6 +148,12 @@ try {
               className="px-4 py-2 bg-blue-500 text-white rounded-lg"
             >
               Erstelle Wallet
+            </button>
+            <button //Hier hab ich dir mal wieder reingepfuscht SORRY
+              onClick={checkWallet}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+            >
+              checkWallet
             </button>
           </div>
         )}
