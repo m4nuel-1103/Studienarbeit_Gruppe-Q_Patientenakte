@@ -3,11 +3,8 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../../Styles/DoctorsDetails.css";
 import { getDocuments } from "../../Services/GetData";
 import { getContract } from "../../contractConfig";
+import { doctors } from '../../db/schema';
 
-interface Doctor {
-    name: string;
-    value: string;
-}
 
 function DoctorDetails() {
     const { value } = useParams(); // Holt den PublicKey aus der URL
@@ -15,9 +12,9 @@ function DoctorDetails() {
     const navigate = useNavigate();
 
     const doctorName = location.state?.doctor.name || "Unbekannt";
-    const allDoctors: Doctor[] = location.state?.allDoctors || [];
-    const validDoctor: Doctor | undefined = allDoctors.find(
-        (doctor: Doctor) => doctor.value === value
+    const allDoctors: typeof doctors.$inferInsert[] = location.state?.allDoctors || [];
+    const validDoctor: typeof doctors.$inferInsert | undefined = allDoctors.find(
+        (doctor: typeof doctors.$inferInsert) => doctor.id === value
     );
 
     const sharedDocuments = ["Befundbericht", "Rezept", "Laborwerte"];
@@ -58,7 +55,7 @@ function DoctorDetails() {
             `Dokument "${selectedDocument}" wird mit Ablaufdatum ${finalExpiryDate} und ${finalAccessCount} Zugriffen freigegeben.`
         );
         try {
-            const {contract,signer} = await getContract("patientenakte"); //signer falls man ihn mal braucht
+            const { contract, signer } = await getContract("patientenakte"); //signer falls man ihn mal braucht
             console.log(signer);
             console.log(contract);
             if (!contract) return;
@@ -98,35 +95,35 @@ function DoctorDetails() {
 
         closeModal();
     };
-    
-    const hasAccess= async() => {//Bisher nur staatische Testfunktion
-        try{
+
+    const hasAccess = async () => {//Bisher nur staatische Testfunktion
+        try {
             const teststring = "document1";
             const enc = new TextEncoder();
             const testEntcode = enc.encode(teststring!);
             const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
             const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
-            console.log("🔹 Berechneter Document Hash (app_hash):",app_hash);
-            const {contract, signer} = await getContract("patientenakte");
+            console.log("🔹 Berechneter Document Hash (app_hash):", app_hash);
+            const { contract, signer } = await getContract("patientenakte");
             console.log(contract);
             // console.log("Has Access Signer",signer.address);
-            if (!contract|| !signer) return;
+            if (!contract || !signer) return;
             const allAccess = await contract.accessList(await signer.getAddress(), app_hash);
             console.log("🔹 Zugriffseintrag:", allAccess);
             //const result = await contract.callStatic.hasAccess(1149696269n);
             //console.log("Zugriffserlaubnis Static: ",result);
-            
+
             const tx = await contract.hasAccess(1149696269);
-            console.log("Has access: ",tx);
+            console.log("Has access: ", tx);
             //await tx.wait();
-            
+
 
             //console.log(tx.value);
             alert("Has Access erfolgreich!");
-        }catch (error) {
+        } catch (error) {
             console.error("Fehler bei hasAccess:", error);
         }
-    
+
     }
     useEffect(() => {
         if (!validDoctor) {

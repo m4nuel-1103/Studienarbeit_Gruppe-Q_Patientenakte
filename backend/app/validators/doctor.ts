@@ -2,7 +2,7 @@ import vine from '@vinejs/vine'
 
 export const createDoctorValidator = vine.compile(
   vine.object({
-    id: vine.string().fixedLength(32).regex(/[\da-fA-F]{32}/),
+    id: vine.string().regex(/(?:0x)?[\da-f]+/i),
     name: vine.string(),
   })
 )

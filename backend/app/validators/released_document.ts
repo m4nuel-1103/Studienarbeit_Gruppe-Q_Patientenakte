@@ -4,7 +4,7 @@ export const createReleasedDocumentValidator = vine.compile(
   vine.object({
     id: vine.number().decimal(0).nullable(),
     documentId: vine.number().decimal(0),
-    doctorAddress: vine.string().fixedLength(32).regex(/[\da-fA-F]{32}/),
+    doctorAddress: vine.string().regex(/(?:0x)?[\da-f]+/i),
     content: vine.string(),
   })
 )
