@@ -5,14 +5,14 @@ import Patients from "../Pages/Doctor/Patients";
 import PatientsDetails from "../Pages/Doctor/PatientsDetails";
 
 const DoctorRoutes = () => {
-  return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/patients" element={<Patients />} />
-      <Route path="/patients/:value" element={<PatientsDetails />} />
-      <Route path="*" element={<NotFound />} /> {/* 404-Fehlerseite */}
-    </Routes>
-  );
+    return (
+        <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/patients" element={<Patients />} />
+            <Route path="/patients/:value" element={<PatientsDetails />} />
+            <Route path="*" element={<NotFound />} /> {/* 404-Fehlerseite */}
+        </Routes>
+    );
 }
 
 export default DoctorRoutes;

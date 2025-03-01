@@ -13,11 +13,12 @@ services:
     # or set shared memory limit when deploy via swarm stack
     volumes:
      - type: bind
-       target: /dev/shm
+       target: /var/lib/postgresql/data/
        source: ./postgres-data/
     environment:
       POSTGRES_PASSWORD: example
-      POSTGRES_USER: postgres
+      POSTGRES_USER: backu
+      POSTGRES_DB: app
 
   # adminer:
   #   image: adminer
