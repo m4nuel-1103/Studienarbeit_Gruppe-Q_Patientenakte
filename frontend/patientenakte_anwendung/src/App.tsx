@@ -4,7 +4,11 @@ import Navbar from "./Components/Navbar/Navbar";
 import DoctorRoutes from "./Services/DoctorRoutes";
 import PatientRoutes from "./Services/PatientRoutes";
 import { useEffect, useState } from "react";
-import { getContract } from "./contractConfig";
+import {
+  checkWallet,
+  createWallet,
+  checkIfWalletIsConnected,
+} from "./Services/Wallet/WalletService";
 
 const App = () => {
   const [isDoc, setIsDoc] = useState(false); // Default role: Patient
@@ -15,81 +19,9 @@ const App = () => {
     setIsDoc(!isDoc);
   };
 
-  //CreateWallet später wo anders hin
-  const createWallet = async () => {
-    try {
-      const { contract, signer } = await getContract("fabrikPatientenakte"); //signer falls man ihn mal braucht
-      console.log(signer);
-      console.log(contract);
-      
-      if (!contract) return;
-     
-      const tx = await contract.createNewPatientenakte();
-      await tx.wait();
-      console.log(tx);
-      alert("Patientenakte erstellt!");
-    }
-    catch (error) {
-      console.error("Fehler beim ERstellen der Patientenakte:", error);
-    }
-  }
- //CreateWallet später wo anders hin
- const checkWallet = async () => {
-  try {
-    const { contract, signer } = await getContract("fabrikPatientenakte"); //signer falls man ihn mal braucht
-    console.log(signer);
-    console.log(contract);
-    if (!contract|| !signer) return;
-    
-    const patientenAdresse=await signer.getAddress()
-    console.log("Wallet-Adresse: ",patientenAdresse);
-    console.log("Contract-Adresse:", contract?.target);
-    console.log("Verfügbare Methoden:", contract.interface.fragments.map(f => f.name));
-    console.log("Contract ABI:", contract?.interface.fragments);
-
-    const tx=await contract.getPatientenakte(patientenAdresse);
-    console.log("Patientenakte-Adresse: ",tx);
-  }
-  catch (error) {
-    console.error("Fehler beim Abruf der Patientenakte:", error);
-  }
-}
-  // Connect to MetaMask
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      alert("MetaMask nicht gefunden!");
-      return;
-    }
-    try {
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      setAccount(accounts[0]); // Save wallet address
-      console.log("Wallet verbunden:", accounts[0]);
-    } catch (error) {
-      console.error("Fehler beim Verbinden mit MetaMask:", error);
-    }
-  };
-
-  // Automatically update account on wallet change
-  const checkIfWalletIsConnected = async () => {
-    if (window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({
-          method: "eth_accounts",
-        });
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-        }
-      } catch (error) {
-        console.error("Fehler beim Überprüfen der Wallet-Verbindung:", error);
-      }
-    }
-  };
-
   // Listen for account changes
   useEffect(() => {
-    checkIfWalletIsConnected();
+    checkIfWalletIsConnected(setAccount);
 
     if (window.ethereum) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,34 +62,44 @@ const App = () => {
             <div className="right-space">
               <div className="right-space-header"></div>
             </div>
-
-            {/* Footer */}
-            <footer className="footer">Footer</footer>
           </>
         ) : (
           <div className="login-container">
-            <h2 className="text-2xl mb-4">Bitte mit MetaMask verbinden, um fortzufahren</h2>
+            <h1>Patientenakte</h1>
+            <h2 className="">Bitte mit MetaMask verbinden, um fortzufahren</h2>
             <button
-              onClick={connectWallet}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+              onClick={async () => {
+                try {
+                  const patientenakte = await checkWallet();
+                  if (!patientenakte) {
+                    // If no patient record exists, prompt the user to create one
+                    if (
+                      window.confirm(
+                        "Möchtest du eine neue Patientenakte erstellen?"
+                      )
+                    ) {
+                      await createWallet();
+                    }
+                  } else {
+                    setAccount(patientenakte);
+                    console.log("Patientenakte gefunden:", patientenakte);
+                  }
+                } catch (error) {
+                  console.error("Fehler beim Verbinden mit MetaMask:", error);
+                  alert(
+                    "Verbindung mit MetaMask fehlgeschlagen. Bitte versuchen Sie es erneut."
+                  );
+                }
+              }}
+              className=""
             >
-              Mit MetaMask verbinden
-            </button>
-            <button //Hier hab ich dir mal wieder reingepfuscht SORRY
-              onClick={createWallet}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-            >
-              Erstelle Wallet
-            </button>
-            <button //Hier hab ich dir mal wieder reingepfuscht SORRY
-              onClick={checkWallet}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-            >
-              checkWallet
+              Mit MetaMask verbinden (checkWallet)
             </button>
           </div>
         )}
       </div>
+      {/* Footer */}
+      <footer className="footer">Footer</footer>
     </Router>
   );
 };
