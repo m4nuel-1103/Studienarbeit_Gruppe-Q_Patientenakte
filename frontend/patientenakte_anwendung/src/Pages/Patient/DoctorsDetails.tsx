@@ -188,7 +188,59 @@ function DoctorDetails(props: DoctorDetailsProps) {
 
         closeModal();
     };
+    
+    const hasAccess= async() => {//Bisher nur statische Testfunktion
+        try{
+            const teststring = "document1";
+            const enc = new TextEncoder();
+            const testEntcode = enc.encode(teststring!);
+            const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
+            const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
+            console.log("🔹 Berechneter Document Hash (app_hash):",app_hash);
+            const {contract, signer} = await getContract("patientenakte");
+            console.log(contract);
+            // console.log("Has Access Signer",signer.address);
+            if (!contract|| !signer) return;
+            const allAccess = await contract.accessList(await signer.getAddress(), app_hash);
+            console.log("🔹 Zugriffseintrag:", allAccess);
+            //const result = await contract.callStatic.hasAccess(1149696269n);
+            //console.log("Zugriffserlaubnis Static: ",result);
+            
+            const tx = await contract.hasAccess(1149696269);
+            console.log("Has access: ",tx);
+            //await tx.wait();
+            
 
+            //console.log(tx.value);
+            alert("Has Access erfolgreich!");
+        }catch (error) {
+            console.error("Fehler bei hasAccess:", error);
+        }
+    
+    }
+
+    const revokeAccess = async (docName: string) => {
+        try {
+            const { contract, signer } = await getContract("patientenakte");
+            if (!contract) return;
+    
+            const enc = new TextEncoder();
+            const docNameData = enc.encode(docName);
+            const docHash = await window.crypto.subtle.digest("SHA-256", docNameData);
+            const appHash = BigInt(new Uint32Array(docHash)[0]);
+    
+            console.log(`⛔ Dokument "${docName}" wird für ${value} entzogen...`);
+    
+            const tx = await contract.revokeAccess(value, appHash);
+            await tx.wait();
+    
+            alert(`Zugriff auf "${docName}" erfolgreich entfernt.`);
+        } catch (error) {
+            console.error("Fehler bei revokeAccess:", error);
+            alert("Fehler beim Entfernen der Freigabe.");
+        }
+    };
+    
     useEffect(() => {
         if (!validDoctor) {
             navigate("/doctors", { replace: true });
@@ -218,16 +270,25 @@ function DoctorDetails(props: DoctorDetailsProps) {
 
             {/* Dokumentenbereich */}
             <div className="doctorsDetails-documents-container">
-                <h3>Freigegebene Dokumente</h3>
-                {sharedDocuments.length > 0 ? (
-                    <ul>
-                        {sharedDocumentsF.map((doc, index) => (
-                            <li key={index}>{doc.name}</li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>Keine freigegebenen Dokumente</p>
-                )}
+            <h3>Freigegebene Dokumente</h3>
+            {sharedDocuments.length > 0 ? (
+                <ul className="shared-documents-list">
+                    {sharedDocuments.map((doc, index) => (
+                        <li key={index}>
+                            <span>{doc}</span> {/* Document name on the left */}
+                            <button 
+                                className="revoke-button"
+                                onClick={() => revokeAccess(doc)}
+                            >
+                                🗑️ Entfernen
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p>Keine freigegebenen Dokumente</p>
+            )}
+
 
                 <h3>Alle Dokumente</h3>
                 {unSharedDocuments.length > 0 ? (

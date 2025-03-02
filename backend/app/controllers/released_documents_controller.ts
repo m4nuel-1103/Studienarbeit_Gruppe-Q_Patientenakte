@@ -36,6 +36,7 @@ export default class ReleasedDocumentsController {
           eq(documents.patientAddress, patient)
         )
       );
+    console.log(result);
     return ctx.response.json(result);
   }
 
@@ -48,8 +49,8 @@ export default class ReleasedDocumentsController {
     return response.json(result);
   }
 
-  public async store({ request }: HttpContext) {
-    const payload = await request.validateUsing(createReleasedDocumentValidator);
+  public async store(ctx: HttpContext) {
+    const payload = await createReleasedDocumentValidator.validate(ctx.request.body());
     await DatabaseService.getDb().insert(releasedDocuments).values(payload);
   }
 
