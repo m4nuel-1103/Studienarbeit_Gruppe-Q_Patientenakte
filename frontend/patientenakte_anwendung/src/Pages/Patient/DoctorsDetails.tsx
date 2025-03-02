@@ -21,7 +21,7 @@ function DoctorDetails(props: DoctorDetailsProps) {
     );
 
     const [allDocuments, setDocuments] = useState<typeof documents.$inferSelect[]>([]);
-    const [sharedDocuments, setSharedDocuments] = useState<typeof releasedDocuments.$inferSelect[]>([]);
+    const [sharedDocuments, setSharedDocuments] = useState<{ releasedDocuments: typeof releasedDocuments.$inferSelect, documents: typeof documents.$inferSelect }[]>([]);
     useEffect(() => {
         fetch(`/api/documents/patient/${props.patientAddress}`)
             .then((r) => r.json())
@@ -38,24 +38,26 @@ function DoctorDetails(props: DoctorDetailsProps) {
                 setSharedDocuments(data);
             });
     }, []);
-    const hasAccess = async () => {//Bisher nur staatische Testfunktion
-        try {
-            const teststring = "document1";
-            const enc = new TextEncoder();
-            const testEntcode = enc.encode(teststring!);
-            const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
-            const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
-            console.log("🔹 Berechneter Document Hash (app_hash):", app_hash);
-        } catch (error) {
-            console.error("Fehler bei hasAccess:", error);
-        }
-    }
+    // const hasAccess = async () => {//Bisher nur staatische Testfunktion
+    //     try {
+    //         const teststring = "document1";
+    //         const enc = new TextEncoder();
+    //         const testEntcode = enc.encode(teststring!);
+    //         const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
+    //         const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
+    //         console.log("🔹 Berechneter Document Hash (app_hash):", app_hash);
+    //     } catch (error) {
+    //         console.error("Fehler bei hasAccess:", error);
+    //     }
+    // }
     let unSharedDocuments: typeof documents.$inferSelect[] = [];
     let sharedDocumentsF: typeof documents.$inferSelect[] = [];
+    console.log(sharedDocuments[0]);
     for (let doc of allDocuments) {
         let shared = false;
         for (let sDoc of sharedDocuments) {
-            if (sDoc.documentId == doc.id) {
+            console.log(`comparing ${doc.id} and ${sDoc.documents.id}`);
+            if (sDoc.documents.id == doc.id) {
                 shared = true;
                 sharedDocumentsF.push(doc);
                 break;
@@ -66,6 +68,7 @@ function DoctorDetails(props: DoctorDetailsProps) {
         }
         unSharedDocuments.push(doc);
     }
+    console.log(`all: ${allDocuments}\nshared: ${sharedDocuments}\n sharedDocumentsF: ${sharedDocumentsF}\nunshared: ${unSharedDocuments}`);
     // const unSharedDocuments = allDocuments.filter(async (doc) => {
     //     const { contract, signer } = await getContract("patientenakte");
     //     // console.log("Has Access Signer",signer.address);
@@ -141,12 +144,15 @@ function DoctorDetails(props: DoctorDetailsProps) {
                 true,
                 ["encrypt", "decrypt"],
             );
-            const doc_enc = await window.crypto.subtle.encrypt(
-                { name: "AES-GCM", length: 256 },
-                key,
-                new TextEncoder().encode(selectedDocument.content)
-            );
-
+            console.log(key);
+            // const doc_enc = await window.crypto.subtle.encrypt(
+            //     { name: "AES-GCM", length: 256 },
+            //     key,
+            //     new TextEncoder().encode(selectedDocument.content)
+            // );
+            // console.log(doc_enc);
+            const key_exp = exportCryptoKey(key);
+            console.log(key_exp);
 
             console.log(
                 [(value!)],
@@ -155,7 +161,7 @@ function DoctorDetails(props: DoctorDetailsProps) {
                 (finalAccessCount),
                 isUnlimitedExpiry,
                 isUnlimitedAccess,
-                [exportCryptoKey(key)]
+                [key_exp]
             );
             //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
             const tx = await contract.grantMultiAccess(
@@ -165,17 +171,21 @@ function DoctorDetails(props: DoctorDetailsProps) {
                 finalAccessCount,
                 isUnlimitedExpiry,
                 isUnlimitedAccess,
-                [exportCryptoKey(key)]
+                [key_exp]
             );
             console.log(tx);
             await tx.wait();
 
             const resp = await fetch(`/api/released_documents`, {
                 method: "POST",
+                headers: {
+                    // 'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     documentId: selectedDocument.id,
                     doctorAddress: value!,
-                    content: String(doc_enc),
+                    content: selectedDocument.content,
                 }),
             }).then((b) => b.json())
             console.log("post-reps: ", resp);
@@ -188,59 +198,54 @@ function DoctorDetails(props: DoctorDetailsProps) {
 
         closeModal();
     };
-    
-    const hasAccess= async() => {//Bisher nur statische Testfunktion
-        try{
+
+    const hasAccess = async () => {//Bisher nur statische Testfunktion
+        try {
             const teststring = "document1";
             const enc = new TextEncoder();
             const testEntcode = enc.encode(teststring!);
             const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
             const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
-            console.log("🔹 Berechneter Document Hash (app_hash):",app_hash);
-            const {contract, signer} = await getContract("patientenakte");
+            console.log("🔹 Berechneter Document Hash (app_hash):", app_hash);
+            const { contract, signer } = await getContract("patientenakte");
             console.log(contract);
             // console.log("Has Access Signer",signer.address);
-            if (!contract|| !signer) return;
+            if (!contract || !signer) return;
             const allAccess = await contract.accessList(await signer.getAddress(), app_hash);
             console.log("🔹 Zugriffseintrag:", allAccess);
             //const result = await contract.callStatic.hasAccess(1149696269n);
             //console.log("Zugriffserlaubnis Static: ",result);
-            
+
             const tx = await contract.hasAccess(1149696269);
-            console.log("Has access: ",tx);
+            console.log("Has access: ", tx);
             //await tx.wait();
-            
+
 
             //console.log(tx.value);
             alert("Has Access erfolgreich!");
-        }catch (error) {
+        } catch (error) {
             console.error("Fehler bei hasAccess:", error);
         }
-    
+
     }
 
-    const revokeAccess = async (docName: string) => {
+    const revokeAccess = async (doc: typeof documents.$inferSelect) => {
         try {
             const { contract, signer } = await getContract("patientenakte");
             if (!contract) return;
-    
-            const enc = new TextEncoder();
-            const docNameData = enc.encode(docName);
-            const docHash = await window.crypto.subtle.digest("SHA-256", docNameData);
-            const appHash = BigInt(new Uint32Array(docHash)[0]);
-    
-            console.log(`⛔ Dokument "${docName}" wird für ${value} entzogen...`);
-    
-            const tx = await contract.revokeAccess(value, appHash);
+
+            console.log(`⛔ Dokument "${doc.name}" wird für ${value} entzogen...`);
+
+            const tx = await contract.revokeAccess(value, doc.id);
             await tx.wait();
-    
-            alert(`Zugriff auf "${docName}" erfolgreich entfernt.`);
+
+            alert(`Zugriff auf "${doc.name}" erfolgreich entfernt.`);
         } catch (error) {
             console.error("Fehler bei revokeAccess:", error);
             alert("Fehler beim Entfernen der Freigabe.");
         }
     };
-    
+
     useEffect(() => {
         if (!validDoctor) {
             navigate("/doctors", { replace: true });
@@ -270,24 +275,24 @@ function DoctorDetails(props: DoctorDetailsProps) {
 
             {/* Dokumentenbereich */}
             <div className="doctorsDetails-documents-container">
-            <h3>Freigegebene Dokumente</h3>
-            {sharedDocuments.length > 0 ? (
-                <ul className="shared-documents-list">
-                    {sharedDocuments.map((doc, index) => (
-                        <li key={index}>
-                            <span>{doc}</span> {/* Document name on the left */}
-                            <button 
-                                className="revoke-button"
-                                onClick={() => revokeAccess(doc)}
-                            >
-                                🗑️ Entfernen
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p>Keine freigegebenen Dokumente</p>
-            )}
+                <h3>Freigegebene Dokumente</h3>
+                {sharedDocuments.length > 0 ? (
+                    <ul className="shared-documents-list">
+                        {sharedDocumentsF.map((doc, index) => (
+                            <li key={index}>
+                                <span>{doc.name}</span> {/* Document name on the left */}
+                                <button
+                                    className="revoke-button"
+                                    onClick={() => revokeAccess(doc)}
+                                >
+                                    🗑️ Entfernen
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>Keine freigegebenen Dokumente</p>
+                )}
 
 
                 <h3>Alle Dokumente</h3>

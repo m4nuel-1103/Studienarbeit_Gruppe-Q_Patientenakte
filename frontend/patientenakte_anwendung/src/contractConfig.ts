@@ -3,7 +3,7 @@ import abiPatientenakte from "./Patientenakte.json"; // Stelle sicher, dass `res
 import abiFabrikPatientenakte from "./FabrikPatientenakte.json"; // Stelle sicher, dass `resolveJsonModule` aktiviert ist
 
 // Adresse des Smart Contracts (ersetze mit der tatsächlichen Adresse)
-const FABRIK_CONTRACT_ADDRESS: string = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const FABRIK_CONTRACT_ADDRESS: string = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 
 // Globales Fensterobjekt um `ethereum` zu typisieren
 declare global {
