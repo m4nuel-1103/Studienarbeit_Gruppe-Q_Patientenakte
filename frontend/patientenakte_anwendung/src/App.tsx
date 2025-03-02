@@ -93,7 +93,7 @@ const App = () => {
               }}
               className=""
             >
-              Mit MetaMask verbinden (checkWallet)
+              Mit MetaMask verbinden
             </button>
           </div>
         )}
