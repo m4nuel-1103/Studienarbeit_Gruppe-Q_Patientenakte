@@ -4,12 +4,13 @@ import "../../Styles/DoctorsDetails.css";
 // import { getDocuments } from "../../Services/GetData";
 import { getContract } from "../../contractConfig";
 import { doctors, documents, releasedDocuments } from '../../db/schema';
+import { encrypt } from '@metamask/eth-sig-util';
 
-type DoctorDetailsProps = {
+type AddressProps = {
     patientAddress: string;
 };
 
-function DoctorDetails(props: DoctorDetailsProps) {
+function DoctorDetails(props: AddressProps) {
     const { value } = useParams(); // Holt den PublicKey aus der URL
     const location = useLocation();
     const navigate = useNavigate();
@@ -136,6 +137,7 @@ function DoctorDetails(props: DoctorDetailsProps) {
             if (!contract) return;
             const exp_date = new Date(finalExpiryDate);
             const exp_date_u = BigInt((exp_date.getTime()) / 1000);
+            const textEnc = new TextEncoder();
             const key = await window.crypto.subtle.generateKey(
                 {
                     name: "AES-GCM",
@@ -145,14 +147,26 @@ function DoctorDetails(props: DoctorDetailsProps) {
                 ["encrypt", "decrypt"],
             );
             console.log(key);
-            // const doc_enc = await window.crypto.subtle.encrypt(
-            //     { name: "AES-GCM", length: 256 },
-            //     key,
-            //     new TextEncoder().encode(selectedDocument.content)
-            // );
-            // console.log(doc_enc);
+            const iv = window.crypto.getRandomValues(new Uint8Array(16));
+            const doc_enc = await window.crypto.subtle.encrypt(
+                { name: "AES-GCM", iv: iv },
+                key,
+                textEnc.encode(selectedDocument.content)
+            );
+            const pKey = await window.ethereum!.request({
+                method: "eth_getEncryptionPublicKey",
+                params: [value]
+            });
+            console.log(doc_enc);
             const key_exp = exportCryptoKey(key);
             console.log(key_exp);
+
+            const keyEnc = JSON.stringify(encrypt({
+                data: JSON.stringify({ k: key_exp, i: iv }),
+                publicKey: pKey,
+                version: "x25519-xsalsa20-poly1305",
+            }));
+
 
             console.log(
                 [(value!)],
@@ -161,7 +175,7 @@ function DoctorDetails(props: DoctorDetailsProps) {
                 (finalAccessCount),
                 isUnlimitedExpiry,
                 isUnlimitedAccess,
-                [key_exp]
+                [keyEnc]
             );
             //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
             const tx = await contract.grantMultiAccess(
@@ -171,7 +185,7 @@ function DoctorDetails(props: DoctorDetailsProps) {
                 finalAccessCount,
                 isUnlimitedExpiry,
                 isUnlimitedAccess,
-                [key_exp]
+                [keyEnc]
             );
             console.log(tx);
             await tx.wait();
@@ -185,7 +199,7 @@ function DoctorDetails(props: DoctorDetailsProps) {
                 body: JSON.stringify({
                     documentId: selectedDocument.id,
                     doctorAddress: value!,
-                    content: selectedDocument.content,
+                    content: String.fromCharCode(...(new Uint8Array(doc_enc))),
                 }),
             }).then((b) => b.json())
             console.log("post-reps: ", resp);
@@ -231,14 +245,29 @@ function DoctorDetails(props: DoctorDetailsProps) {
 
     const revokeAccess = async (doc: typeof documents.$inferSelect) => {
         try {
-            const { contract, signer } = await getContract("patientenakte");
+            const { contract, _signer } = await getContract("patientenakte");
             if (!contract) return;
 
-            console.log(`⛔ Dokument "${doc.name}" wird für ${value} entzogen...`);
+            console.log(`⛔ Dokument "${doc.name}" (id: ${doc.id}) wird für ${value} entzogen...`);
 
             const tx = await contract.revokeAccess(value, doc.id);
             await tx.wait();
 
+
+            const deletionBody = JSON.stringify({
+                documentId: doc.id,
+                doctorAddress: value!,
+            });
+            console.log(deletionBody);
+            const resp = await fetch(`/api/released_documents_dd/`, {
+                method: "DELETE",
+                headers: {
+                    // 'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: deletionBody,
+            }).then((b) => b.json())
+            console.log("post-reps: ", resp);
             alert(`Zugriff auf "${doc.name}" erfolgreich entfernt.`);
         } catch (error) {
             console.error("Fehler bei revokeAccess:", error);

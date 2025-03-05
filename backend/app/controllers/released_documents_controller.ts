@@ -20,11 +20,9 @@ export default class ReleasedDocumentsController {
   }
 
   public async forDoctorPatient(ctx: HttpContext) {
-    console.log(ctx);
     const patient = ctx.request.qs()["patient"];
-    console.log(patient);
     const doctor = ctx.request.qs()["doctor"];
-    console.log(doctor);
+    console.log(`doc for doctor: ${doctor} from patient: ${patient}`);
     const result = await DatabaseService
       .getDb()
       .select()
@@ -36,7 +34,6 @@ export default class ReleasedDocumentsController {
           eq(documents.patientAddress, patient)
         )
       );
-    console.log(result);
     return ctx.response.json(result);
   }
 
@@ -57,5 +54,22 @@ export default class ReleasedDocumentsController {
   public async delete({ params, response }: HttpContext) {
     await DatabaseService.getDb().delete(releasedDocuments).where(eq(releasedDocuments.id, params.id));
     return response.ok({ success: true });
+  }
+
+  public async deleteDoctor(ctx: HttpContext) {
+    const body = ctx.request.body();
+    const docId = body.documentId;
+    const doctAdd = body.doctorAddress;
+    console.log("document-id to unrelease: ", docId);
+    console.log("doctor address to unrelease from: ", doctAdd);
+    await DatabaseService
+      .getDb()
+      .delete(releasedDocuments)
+      .where(
+        and(
+          eq(releasedDocuments.documentId, docId),
+          eq(releasedDocuments.doctorAddress, doctAdd)
+        )).execute();
+    return ctx.response.ok({ success: true });
   }
 }
