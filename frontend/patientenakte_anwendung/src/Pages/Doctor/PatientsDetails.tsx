@@ -19,7 +19,7 @@ const PatientsDetails = (props: AddressProps) => {
     const { patient } = location.state || {};
     const [sharedDocuments, setSharedDocuments] = useState<ComDoc[]>([]);
     useEffect(() => {
-        fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: patient!.id, doctor: props.address }).toString())
+        fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: patient!.id.toLowerCase(), doctor: props.address.toLowerCase() }).toString())
             .then((r) => r.json())
             .then((data) => {
                 console.log(data);
@@ -31,27 +31,35 @@ const PatientsDetails = (props: AddressProps) => {
             const { contract, signer } = await getContract("patientenakte"); //signer falls man ihn mal braucht
             console.log(signer);
             console.log(contract);
-            if (!contract) return;
-            const tx = await contract.useAccess(doc.documents.id);
-            console.log(tx);
-            await tx.wait();
-            const rDoc: RelDoc = await fetch(`/api/released_documents/${doc.releasedDocuments.id}`)
+            const enc = new TextEncoder();
+            if (!contract) { console.error("no contract"); return; }
+            console.log("doc-id: ", doc.documents.id);
+            const hasAc = await contract.hasAccess(BigInt(doc.documents.id));
+            if (!hasAc) return;
+            const tx = await contract.useAccess(BigInt(doc.documents.id));
+            const rDocA: RelDoc[] = await fetch(`/api/released_documents/${doc.releasedDocuments.id}`)
                 .then((r) => r.json());
-            console.log(rDoc);
-            const decRes = await window.ethereum!.request({ method: "eth_decrypt", params: [`0x${Buffer.from(tx, "utf8").toString("hex")}`, props.address] });
-            console.log(decRes);
+            if (rDocA.length != 1) return;
+            const rDoc = rDocA[0];
+            const a = enc.encode(tx);
+            const b = Array.from(a).map((n) => n.toString(16).padStart(2, '0')).join('');
+            const req = { method: "eth_decrypt", params: [`0x${b}`, props.address] };
+            const decRes3 = await window.ethereum!.request(req);
+            const decRes: { k: string, i: number[] } = JSON.parse(decRes3);
+            const iv = Uint8Array.from(decRes.i);
+            const keyBuffer = (Uint8Array.from(atob(decRes.k), (m) => m.codePointAt(0)));
+            const symKey = await window.crypto.subtle.importKey("raw", keyBuffer, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
             const decRes2 = await window.crypto.subtle.decrypt(
-                { name: "AES-GCM", iv: decRes.i },
-                await window.crypto.subtle.importKey("raw", new Uint8Array(decRes.k), { name: "AES-GCM" }, true, ["encrypt", "decrypt"]),
-                new Uint8Array(rDoc.content, "utf8")
+                { name: "AES-GCM", iv: iv },
+                symKey,
+                Uint8Array.from(atob(rDoc.content), (m) => m.codePointAt(0))
             );
+            const st = new TextDecoder().decode(decRes2);
+            console.log(st);
         } catch (error) {
+            console.log(`fetchDoc error: ${error}`, error);
         }
-
-
     };
-
-    const dummyPDF = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
 
     return (
         <>
@@ -81,7 +89,7 @@ const PatientsDetails = (props: AddressProps) => {
                             {sharedDocuments.map((doc) => (
                                 <div
                                     key={doc.documents.id}
-                                    onClick={() => window.open(dummyPDF, "_blank", "noopener,noreferrer")}
+                                    onClick={() => fetchDoc(doc)}
                                     className="document-box no-select"
                                 >
                                     <p>{doc.documents.name}</p>

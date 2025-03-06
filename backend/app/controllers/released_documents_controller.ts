@@ -49,6 +49,7 @@ export default class ReleasedDocumentsController {
   public async store(ctx: HttpContext) {
     const payload = await createReleasedDocumentValidator.validate(ctx.request.body());
     await DatabaseService.getDb().insert(releasedDocuments).values(payload);
+    ctx.response.json({ id: -1 });
   }
 
   public async delete({ params, response }: HttpContext) {

@@ -18,13 +18,13 @@ function DoctorDetails(props: AddressProps) {
     const doctorName = location.state?.doctor.name || "Unbekannt";
     const allDoctors: typeof doctors.$inferSelect[] = location.state?.allDoctors || [];
     const validDoctor: typeof doctors.$inferSelect | undefined = allDoctors.find(
-        (doctor: typeof doctors.$inferSelect) => doctor.id === value
+        (doctor: typeof doctors.$inferSelect) => doctor.id === value!.toLowerCase()
     );
 
     const [allDocuments, setDocuments] = useState<typeof documents.$inferSelect[]>([]);
     const [sharedDocuments, setSharedDocuments] = useState<{ releasedDocuments: typeof releasedDocuments.$inferSelect, documents: typeof documents.$inferSelect }[]>([]);
     useEffect(() => {
-        fetch(`/api/documents/patient/${props.patientAddress}`)
+        fetch(`/api/documents/patient/${props.patientAddress.toLowerCase()}`)
             .then((r) => r.json())
             .then((data) => {
                 console.log(data);
@@ -32,7 +32,7 @@ function DoctorDetails(props: AddressProps) {
             });
     }, []);
     useEffect(() => {
-        fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: props.patientAddress, doctor: value! }).toString())
+        fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: props.patientAddress.toLowerCase(), doctor: value!.toLowerCase() }).toString())
             .then((r) => r.json())
             .then((data) => {
                 console.log(data);
@@ -112,11 +112,16 @@ function DoctorDetails(props: AddressProps) {
         setIsUnlimitedAccess(false);
     };
 
+    function encBase64(s: ArrayBuffer) {
+        const u8b = new Uint8Array(s);
+        const binString = Array.from(u8b, (b) => String.fromCodePoint(b)).join("");
+        const ret = btoa(binString);
+        return ret;
+    }
+
     async function exportCryptoKey(key: CryptoKey) {
         const exported = await window.crypto.subtle.exportKey("raw", key);
-        const exportedKeyBuffer = new Uint8Array(exported);
-
-        return `${exportedKeyBuffer}`;
+        return encBase64(exported);
     }
 
 
@@ -146,7 +151,6 @@ function DoctorDetails(props: AddressProps) {
                 true,
                 ["encrypt", "decrypt"],
             );
-            console.log(key);
             const iv = window.crypto.getRandomValues(new Uint8Array(16));
             const doc_enc = await window.crypto.subtle.encrypt(
                 { name: "AES-GCM", iv: iv },
@@ -157,19 +161,16 @@ function DoctorDetails(props: AddressProps) {
                 method: "eth_getEncryptionPublicKey",
                 params: [value]
             });
-            console.log(doc_enc);
-            const key_exp = exportCryptoKey(key);
-            console.log(key_exp);
-
+            const key_exp = (await exportCryptoKey(key));
+            const jsonKey = { k: key_exp, i: Array.from(iv) };
+            const jsonKeyString = JSON.stringify(jsonKey);
             const keyEnc = JSON.stringify(encrypt({
-                data: JSON.stringify({ k: key_exp, i: iv }),
+                data: jsonKeyString,
                 publicKey: pKey,
                 version: "x25519-xsalsa20-poly1305",
             }));
-
-
             console.log(
-                [(value!)],
+                [(value!.toLowerCase())],
                 [selectedDocument.id],
                 (exp_date_u),
                 (finalAccessCount),
@@ -179,7 +180,7 @@ function DoctorDetails(props: AddressProps) {
             );
             //grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _expiresFlag, bool _usesFlag, string[] memory _encryptedKeys)
             const tx = await contract.grantMultiAccess(
-                [(value!)],
+                [(value!.toLowerCase())],
                 [selectedDocument.id],
                 exp_date_u,
                 finalAccessCount,
@@ -187,21 +188,20 @@ function DoctorDetails(props: AddressProps) {
                 isUnlimitedAccess,
                 [keyEnc]
             );
-            console.log(tx);
             await tx.wait();
-
+            const jsonBody = {
+                documentId: selectedDocument.id,
+                doctorAddress: value!.toLowerCase(),
+                content: encBase64(doc_enc),
+            };
+            const jsonBodyString = JSON.stringify(jsonBody);
             const resp = await fetch(`/api/released_documents`, {
                 method: "POST",
                 headers: {
-                    // 'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    documentId: selectedDocument.id,
-                    doctorAddress: value!,
-                    content: String.fromCharCode(...(new Uint8Array(doc_enc))),
-                }),
-            }).then((b) => b.json())
+                body: jsonBodyString,
+            }).then((b) => { console.log(b); return b.json(); })
             console.log("post-reps: ", resp);
 
             console.log(tx);
@@ -256,7 +256,7 @@ function DoctorDetails(props: AddressProps) {
 
             const deletionBody = JSON.stringify({
                 documentId: doc.id,
-                doctorAddress: value!,
+                doctorAddress: value!.toLowerCase(),
             });
             console.log(deletionBody);
             const resp = await fetch(`/api/released_documents_dd/`, {
