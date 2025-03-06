@@ -10,6 +10,18 @@ import {
     checkIfWalletIsConnected,
 } from "./Services/Wallet/WalletService";
 
+import * as LitJsSdk from "@lit-protocol/lit-node-client";
+import { LIT_NETWORK } from "@lit-protocol/constants";
+import { ethers } from "ethers";
+import { decryptToString } from '@lit-protocol/encryption';
+import { LIT_ABILITY } from "@lit-protocol/constants";
+import {
+    LitAccessControlConditionResource,
+    createSiweMessageWithRecaps,
+    generateAuthSig,
+} from "@lit-protocol/auth-helpers";
+
+
 const App = () => {
     const [isDoc, setIsDoc] = useState(false); // Default role: Patient
     const [account, setAccount] = useState<string | null>(null); // Wallet address
@@ -146,7 +158,7 @@ const App = () => {
 
                         <main className="main-content">
                             {/* Switch routes dynamically */}
-                            {isDoc ? <DoctorRoutes /> : <PatientRoutes patientAddress={account} />}
+                            {isDoc ? <DoctorRoutes address={account} /> : <PatientRoutes patientAddress={account} />}
                         </main>
 
                         <div className="right-space">

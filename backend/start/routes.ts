@@ -11,6 +11,7 @@ import PatientsController from '#controllers/patients_controller';
 import DoctorsController from '#controllers/doctors_controller';
 import DocumentsController from '#controllers/documents_controller';
 import ReleasedDocumentsController from '#controllers/released_documents_controller';
+import EncryptionController from '#controllers/encryptions_controller';
 // import { drizzle } from 'drizzle-orm/node-postgres';
 // import { patientTable } from '../db/schema.js';
 
@@ -50,3 +51,8 @@ router.get('/released_documents/:id', [ReleasedDocumentsController, "show"])
 router.get('/released_documents/doctor/:id', [ReleasedDocumentsController, "forDoctor"])
 router.get('/released_documents_for/doctor_patient/', [ReleasedDocumentsController, "forDoctorPatient"])
 router.delete('/released_documents/:id', [ReleasedDocumentsController, "delete"])
+router.delete('/released_documents_dd/', [ReleasedDocumentsController, "deleteDoctor"])
+
+
+
+router.post('/encrypt/', [EncryptionController, "encrypt"])
