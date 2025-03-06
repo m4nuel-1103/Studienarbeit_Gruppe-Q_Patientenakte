@@ -36,7 +36,9 @@ const PatientsDetails = (props: AddressProps) => {
             console.log("doc-id: ", doc.documents.id);
             const hasAc = await contract.hasAccess(BigInt(doc.documents.id));
             if (!hasAc) return;
-            const tx = await contract.useAccess(BigInt(doc.documents.id));
+            const txWrite = await contract.useAccessWrite(BigInt(doc.documents.id));
+            await txWrite.wait();
+            const tx = await contract.useAccessRead(BigInt(doc.documents.id));
             const rDocA: RelDoc[] = await fetch(`/api/released_documents/${doc.releasedDocuments.id}`)
                 .then((r) => r.json());
             if (rDocA.length != 1) return;
