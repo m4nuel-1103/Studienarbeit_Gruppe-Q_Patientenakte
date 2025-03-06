@@ -7,3 +7,5 @@ contracts-test/artifacts
 contracts-test/cache
 frontend/patientenakte_anwendung/src/Patientenakte.json
 backend/drizzle
+
+postgres-data/

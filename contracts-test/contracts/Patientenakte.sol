@@ -9,7 +9,8 @@ contract Patientenakte {
         uint remainingUses;
         bool dontExpiresFlag; //Zeigt an ob zeitlich begrenzt  True heißt  Nein es ist nicht zeitlich begrenzt
         bool noUseLimitFlag;    //Zeigt an ob auf Anzahl begrenzt True heißt hier nicht begrenzt auf häufigkeit
-        string encryptedKey; // Verschlüsselter AES-Schlüssel 
+        string encryptedKey; // Verschlüsselter AES-Schlüssel
+        uint lastUseAccess; //Wird sich gemerkt beim useAccess damit die nächsten 15 min kein 2 Zugriff abgezogen wird 
 
         //enctyped Key anderer Datentyp?
     }
@@ -25,17 +26,6 @@ contract Patientenakte {
         patient = _patient;     
     }
 
-    function grantAccess(address _doctor, uint256 _documentID, uint _expiresAt, uint _remainingUses, bool _dontExpiresFlag, bool _noUseLimitFlag,string memory _encryptedKey) public {
-        //Die Funktion könnte dann eigentlich auch weg... da die grantMultiAccess alles regeln müsste
-        //Fehlen auch noch paar Requires zwecks den neune Flags....
-        require(msg.sender == patient, "Nur der Patient kann Zugriff gewaehren");
-        require(_expiresAt > block.timestamp, "Muss in der Zukunft liegen");
-        require(_remainingUses > 0, "Zugriffe muessen > 0 sein");
-        //Hier wird Extra nicht geprueft ob schon Zugriff besteht so wird die Funktion als grant und update parallel verwendet
-        //Das könnte man im Frontend lösen
-        accessList[_doctor][_documentID] = Access(_expiresAt, _remainingUses, _dontExpiresFlag, _noUseLimitFlag,_encryptedKey);
-        emit AccessGranted(_doctor, _documentID, _expiresAt, _remainingUses, _dontExpiresFlag, _noUseLimitFlag);
-    }
     function grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _dontExpiresFlag, bool _noUseLimitFlag, string[] memory _encryptedKeys) public {
         require(msg.sender == patient, "Nur der Patient kann Zugriff gewaehren");
         require(_doctors.length>0, "Mindestens ein Arzt uebergeben");//auch im Frontend abfangen...
@@ -62,7 +52,7 @@ contract Patientenakte {
             string memory encKey = _encryptedKeys[i];
             for (uint j= 0; j < _doctors.length; j++){
                 address doctor =_doctors[j];
-                accessList[doctor][docID] = Access(_expiresAt, _remainingUses, _dontExpiresFlag, _noUseLimitFlag, encKey);
+                accessList[doctor][docID] = Access(_expiresAt, _remainingUses, _dontExpiresFlag, _noUseLimitFlag, encKey,0);
                 emit AccessGranted(doctor, docID, _expiresAt, _remainingUses, _dontExpiresFlag, _noUseLimitFlag);
             }
         }
@@ -132,34 +122,38 @@ contract Patientenakte {
         
     }
 
-    function useAccess(uint256 _documentID) public returns (string memory) {
+    function useAccessWrite(uint256 _documentID) public {
         Access storage access = accessList[msg.sender][_documentID];
-        require(access.expiresAt != 0 && access.remainingUses!=0 && !access.dontExpiresFlag && !access.noUseLimitFlag, "Kein Eintrag gefunden");
+        require(access.expiresAt != 0 || access.remainingUses!=0  || access.dontExpiresFlag || access.noUseLimitFlag, "Kein Eintrag gefunden");
         
         if(access.dontExpiresFlag &&  !access.noUseLimitFlag){
             require(access.remainingUses > 0,"Keine Zugriffe uebrig");
             //sollen wir hier noch den Eintrag löschen?
             access.remainingUses -= 1;
-            //return access.encryptedKey;
             //zeitlich unendlich beschraenkt auf Anzahl
         }
         if (!access.dontExpiresFlag && access.noUseLimitFlag){
             //sollen wir hier noch den Eintrag löschen?
             require(access.expiresAt >block.timestamp, "Zugriffszeitraum abgelaufen");
-            //return access.encryptedKey;
             //zeitlich beschreankt mit unendlich Anzahl
             
         }
         if(!access.dontExpiresFlag && !access.noUseLimitFlag){
             //sollen wir hier noch den Eintrag löschen?
             require(access.expiresAt >block.timestamp && access.remainingUses> 0);
-             access.remainingUses -= 1;
+            access.remainingUses -= 1;
              //zeitlich begrenzt
              //Anzahl zugriffe beschraenkt
         }
         emit AccessUsed(msg.sender, _documentID,  access.expiresAt,  access.remainingUses);
- 
+        access.lastUseAccess=block.timestamp;
+    }
+    function useAccessRead(uint256 _documentID) public view returns (string memory){
+        Access storage access = accessList[msg.sender][_documentID];
+        require(access.expiresAt != 0 || access.remainingUses!=0  || access.dontExpiresFlag || access.noUseLimitFlag, "Kein Eintrag gefunden");
+        require(access.lastUseAccess + 15*60> block.timestamp, "Ihre 15 min Zugriff sind abgelaufen");
         return access.encryptedKey;
+
     }
 
     function revokeAccess(address _doctor, uint256 _documentID) public {
