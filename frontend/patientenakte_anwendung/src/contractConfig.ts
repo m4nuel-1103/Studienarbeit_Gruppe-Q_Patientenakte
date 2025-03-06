@@ -3,7 +3,7 @@ import abiPatientenakte from "./Patientenakte.json"; // Stelle sicher, dass `res
 import abiFabrikPatientenakte from "./FabrikPatientenakte.json"; // Stelle sicher, dass `resolveJsonModule` aktiviert ist
 
 // Adresse des Smart Contracts (ersetze mit der tatsächlichen Adresse)
-const FABRIK_CONTRACT_ADDRESS: string = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+const FABRIK_CONTRACT_ADDRESS: string = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 // Globales Fensterobjekt um `ethereum` zu typisieren
 declare global {
@@ -62,10 +62,10 @@ export const getContract = async (
       console.log("Patientenakte Adresse verifiziert:", patientenakteAddress);
 
       contract = new ethers.Contract(patientenakteAddress, abiPatientenakte.abi, signer);
-      console.log("👂 Höre auf Events von:", patientenakteAddress);
+      console.log("Höre auf Events von:", patientenakteAddress);
       const filter = contract.filters.AccessGranted();
       const events = await contract.queryFilter(filter);
-      console.log("🔍 Gefundene Events:", events);
+      console.log("Gefundene Events:", events);
       contract.on("AccessGranted", (doctor: bigint, docID: bigint, _expiresAt: bigint, _remainingUses: bigint, _expiresFlag: boolean, _usesFlag: boolean) => {
         console.log("Event ausgelöst!");
         console.log("Patient:", doctor);
