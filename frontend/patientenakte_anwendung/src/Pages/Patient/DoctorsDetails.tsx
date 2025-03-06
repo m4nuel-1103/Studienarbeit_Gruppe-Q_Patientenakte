@@ -53,7 +53,6 @@ function DoctorDetails(props: AddressProps) {
     // }
     let unSharedDocuments: typeof documents.$inferSelect[] = [];
     let sharedDocumentsF: typeof documents.$inferSelect[] = [];
-    console.log(sharedDocuments[0]);
     for (let doc of allDocuments) {
         let shared = false;
         for (let sDoc of sharedDocuments) {
@@ -275,11 +274,11 @@ function DoctorDetails(props: AddressProps) {
         }
     };
 
-    useEffect(() => {
-        if (!validDoctor) {
-            navigate("/doctors", { replace: true });
-        }
-    }, [validDoctor, navigate]);
+    // useEffect(() => {
+    //     if (!validDoctor) {
+    //         navigate("/doctors", { replace: true });
+    //     }
+    // }, [validDoctor, navigate]);
 
     return (
         <div className="doctorsDetails-container">

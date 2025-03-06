@@ -64,6 +64,7 @@
     "@lit-protocol/lit-node-client-nodejs": "^7.0.7",
     "@metamask/eth-sig-util": "^8.2.0",
     "@vinejs/vine": "^3.0.0",
+    "backend": "file:",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.40.0",
     "ethers": "^5.8.0",

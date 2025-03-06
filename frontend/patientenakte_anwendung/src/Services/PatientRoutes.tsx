@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import NotFound from "../Pages/NotFound";
 import Doctors from "../Pages/Patient/Doctors";
 import DoctorsDetails from "../Pages/Patient/DoctorsDetails";
+import PatientHome from "../Pages/Patient/PatientHome";
 import Home from "../Pages/Home";
 
 type PatientRoutesProps = {
@@ -11,7 +12,7 @@ type PatientRoutesProps = {
 const PatientRoutes = (props: PatientRoutesProps) => {
     return (
         <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<PatientHome patientAddress={props.patientAddress}/>} />
             <Route path="/doctors" element={<Doctors />} />
             <Route path="/doctors/:value" element={<DoctorsDetails patientAddress={props.patientAddress} />} />
             <Route path="*" element={<NotFound />} /> {/* 404-Fehlerseite */}

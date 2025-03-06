@@ -39,9 +39,10 @@ export default class DocumentsController {
     return response.json(result);
   }
 
-  public async store({ request }: HttpContext) {
+  public async store({ request, response }: HttpContext) {
     const payload = await request.validateUsing(createDocumentValidator);
-    await DatabaseService.getDb().insert(documents).values(payload);
+    const oid = await DatabaseService.getDb().insert(documents).values(payload).then((r) => r.oid);
+    response.ok({id: oid});
   }
 
   public async delete({ params, response }: HttpContext) {
