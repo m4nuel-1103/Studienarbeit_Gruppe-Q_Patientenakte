@@ -248,7 +248,7 @@ function DoctorDetails(props: AddressProps) {
             const { contract, _signer } = await getContract("patientenakte");
             if (!contract) return;
 
-            console.log(`⛔ Dokument "${doc.name}" (id: ${doc.id}) wird für ${value} entzogen...`);
+            console.log(`Dokument "${doc.name}" (id: ${doc.id}) wird für ${value} entzogen...`);
 
             const tx = await contract.revokeAccess(value, doc.id);
             await tx.wait();
