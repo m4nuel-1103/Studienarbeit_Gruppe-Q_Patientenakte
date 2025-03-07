@@ -27,11 +27,33 @@ export default class ReleasedDocumentsController {
       .getDb()
       .select()
       .from(releasedDocuments)
-      .leftJoin(documents, eq(documents.id, releasedDocuments.documentId))
       .where(
         and(
           eq(releasedDocuments.doctorAddress, doctor),
-          eq(documents.patientAddress, patient)
+          eq(releasedDocuments.patientAddress, patient)
+        )
+      );
+    return ctx.response.json(result);
+  }
+
+  public async forDoctorPatientNoContent(ctx: HttpContext) {
+    const patient = ctx.request.qs()["patient"];
+    const doctor = ctx.request.qs()["doctor"];
+    console.log(`doc for doctor: ${doctor} from patient: ${patient}`);
+    const result = await DatabaseService
+      .getDb()
+      .select({
+        id: releasedDocuments.id,
+        documentId: releasedDocuments.documentId,
+        doctorAddress: releasedDocuments.doctorAddress,
+        patientAddress: releasedDocuments.patientAddress,
+        name: releasedDocuments.name,
+      })
+      .from(releasedDocuments)
+      .where(
+        and(
+          eq(releasedDocuments.doctorAddress, doctor),
+          eq(releasedDocuments.patientAddress, patient)
         )
       );
     return ctx.response.json(result);
