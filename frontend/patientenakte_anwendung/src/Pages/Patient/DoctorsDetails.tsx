@@ -10,6 +10,14 @@ type AddressProps = {
     patientAddress: string;
 };
 
+type Document = typeof documents.$inferSelect;
+
+type Access = {
+    access: boolean,
+    expiresAt: bigint,
+    remainingUses: bigint,
+};
+
 function DoctorDetails(props: AddressProps) {
     const { value } = useParams(); // Holt den PublicKey aus der URL
     const location = useLocation();
@@ -21,54 +29,103 @@ function DoctorDetails(props: AddressProps) {
         (doctor: typeof doctors.$inferSelect) => doctor.id === value!.toLowerCase()
     );
 
-    const [allDocuments, setDocuments] = useState<typeof documents.$inferSelect[]>([]);
-    const [sharedDocuments, setSharedDocuments] = useState<{ releasedDocuments: typeof releasedDocuments.$inferSelect, documents: typeof documents.$inferSelect }[]>([]);
-    useEffect(() => {
-        fetch(`/api/documents/patient/${props.patientAddress.toLowerCase()}`)
-            .then((r) => r.json())
-            .then((data) => {
-                console.log(data);
-                setDocuments(data);
-            });
-    }, []);
-    useEffect(() => {
-        fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: props.patientAddress.toLowerCase(), doctor: value!.toLowerCase() }).toString())
-            .then((r) => r.json())
-            .then((data) => {
-                console.log(data);
-                setSharedDocuments(data);
-            });
-    }, []);
-    // const hasAccess = async () => {//Bisher nur staatische Testfunktion
-    //     try {
-    //         const teststring = "document1";
-    //         const enc = new TextEncoder();
-    //         const testEntcode = enc.encode(teststring!);
-    //         const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
-    //         const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
-    //         console.log("🔹 Berechneter Document Hash (app_hash):", app_hash);
-    //     } catch (error) {
-    //         console.error("Fehler bei hasAccess:", error);
-    //     }
-    // }
+    const [allDocuments, setDocuments] = useState<Document[]>([]);
+    const [accessList, setAccessList] = useState<Access[]>([]);
+    // const [sharedDocuments, setSharedDocuments] = useState<{ releasedDocuments: typeof releasedDocuments.$inferSelect, documents: typeof documents.$inferSelect }[]>([]);
+    const fetchStuff = async () => {
+        const docs: Document[] = await fetch(`/api/documents/patient/${props.patientAddress.toLowerCase()}`)
+            .then((r) => r.json());
+        console.log(docs);
+        if (docs.length == 0) {
+            console.log("returning early");
+            setDocuments([]);
+            setAccessList([]);
+            return;
+        }
+        const { contract } = await getContract("patientenakte");
+        if (!contract) { return; }
+
+        const docIds = docs.map((doc) => doc.id);
+        console.log(`checking if doctor: ${value} has access to [${docIds}]`);
+        const accessListRet: Access[] = await contract.whoHasAccess(
+            value!,
+            docIds
+        );
+        console.log("accessList: ", accessListRet);
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+        let documentsDecTitle: Document[] = new Array(docs.length);
+        for (let i = 0; i < docs.length; ++i) {
+            const doc = docs[i];
+            console.log(doc);
+
+            const a = encoder.encode(doc.name);
+            const b = Array.from(a).map((n) => n.toString(16).padStart(2, '0')).join('');
+            const req = { method: "eth_decrypt", params: [`0x${b}`, props.patientAddress] };
+            console.log(`decrypting ${doc.name} (0x${b})`);
+            const decTitle: string = await window.ethereum!.request(req);
+
+            // const keyBuffer = (Uint8Array.from(atob(decTitle), (m) => m.codePointAt(0)));
+            // const keyBufferDecod = decoder.decode(keyBuffer);
+            console.log(decTitle);
+            // console.log(keyBufferDecod);
+            documentsDecTitle[i] = {
+                id: doc.id,
+                name: decTitle,
+                patientAddress: doc.patientAddress,
+                content: doc.content,
+            };
+        }
+        setDocuments(documentsDecTitle);
+        setAccessList(accessListRet);
+    };
+    useEffect(() => { fetchStuff(); }, []);
+    // useEffect(() => {
+    //     fetch(`/api/documents/patient/${props.patientAddress.toLowerCase()}`)
+    //         .then((r) => r.json())
+    //         .then((data: Document[]) => {
+    //             console.log(data);
+    //             setDocuments(data);
+    //             getContract("patientenakte")
+    //                 .then(({ contract }) => {
+    //                     if (!contract) { return; }
+    //                     contract.whoHasAccess(value!, allDocuments.map((doc) => doc.id));
+    //                 });
+    //         });
+    // }, []);
+    // useEffect(() => {
+    //     fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: props.patientAddress.toLowerCase(), doctor: value!.toLowerCase() }).toString())
+    //         .then((r) => r.json())
+    //         .then((data) => {
+    //             console.log(data);
+    //             setSharedDocuments(data);
+    //         });
+    // }, []);
     let unSharedDocuments: typeof documents.$inferSelect[] = [];
     let sharedDocumentsF: typeof documents.$inferSelect[] = [];
-    for (let doc of allDocuments) {
-        let shared = false;
-        for (let sDoc of sharedDocuments) {
-            console.log(`comparing ${doc.id} and ${sDoc.documents.id}`);
-            if (sDoc.documents.id == doc.id) {
-                shared = true;
-                sharedDocumentsF.push(doc);
-                break;
-            }
+    for (let i = 0; i < allDocuments.length; ++i) {
+        if (accessList[i].access) {
+            sharedDocumentsF.push(allDocuments[0]);
+        } else {
+            unSharedDocuments.push(allDocuments[0]);
         }
-        if (shared) {
-            continue;
-        }
-        unSharedDocuments.push(doc);
     }
-    console.log(`all: ${allDocuments}\nshared: ${sharedDocuments}\n sharedDocumentsF: ${sharedDocumentsF}\nunshared: ${unSharedDocuments}`);
+    // for (let doc of allDocuments) {
+    //     let shared = false;
+    //     for (let sDoc of sharedDocuments) {
+    //         console.log(`comparing ${doc.id} and ${sDoc.documents.id}`);
+    //         if (sDoc.documents.id == doc.id) {
+    //             shared = true;
+    //             sharedDocumentsF.push(doc);
+    //             break;
+    //         }
+    //     }
+    //     if (shared) {
+    //         continue;
+    //     }
+    //     unSharedDocuments.push(doc);
+    // }
+    // console.log(`all: ${allDocuments}\nshared: ${sharedDocuments}\n sharedDocumentsF: ${sharedDocumentsF}\nunshared: ${unSharedDocuments}`);
     // const unSharedDocuments = allDocuments.filter(async (doc) => {
     //     const { contract, signer } = await getContract("patientenakte");
     //     // console.log("Has Access Signer",signer.address);
@@ -151,10 +208,31 @@ function DoctorDetails(props: AddressProps) {
                 ["encrypt", "decrypt"],
             );
             const iv = window.crypto.getRandomValues(new Uint8Array(16));
+
+            const a = textEnc.encode(selectedDocument.content);
+            const b = Array.from(a).map((n) => n.toString(16).padStart(2, '0')).join('');
+            const req = { method: "eth_decrypt", params: [`0x${b}`, props.patientAddress] };
+            console.log(`decrypting ${selectedDocument.name}-content (${selectedDocument.content})`);
+            const decContent: string = await window.ethereum!.request(req);
+            console.log(decContent.length);
+            const decContentBuf = textEnc.encode(decContent);
+            // console.log(decContentBuf);
+
+
+            // const contentBuffer = (Uint8Array.from(atob(decContent), (m) => m.codePointAt(0)));
+            // const contentBufferDecod = new TextDecoder().decode(contentBuffer);
+            // console.log(contentBufferDecod);
+            // console.log(contentBuffer);
+
             const doc_enc = await window.crypto.subtle.encrypt(
                 { name: "AES-GCM", iv: iv },
                 key,
-                textEnc.encode(selectedDocument.content)
+                decContentBuf,
+            );
+            const name_enc = await window.crypto.subtle.encrypt(
+                { name: "AES-GCM", iv: iv },
+                key,
+                textEnc.encode(selectedDocument.name)
             );
             const pKey = await window.ethereum!.request({
                 method: "eth_getEncryptionPublicKey",
@@ -191,6 +269,8 @@ function DoctorDetails(props: AddressProps) {
             const jsonBody = {
                 documentId: selectedDocument.id,
                 doctorAddress: value!.toLowerCase(),
+                patientAddress: props.patientAddress.toLowerCase(),
+                name: encBase64(name_enc),
                 content: encBase64(doc_enc),
             };
             const jsonBodyString = JSON.stringify(jsonBody);
@@ -203,7 +283,6 @@ function DoctorDetails(props: AddressProps) {
             }).then((b) => { console.log(b); return b.json(); })
             console.log("post-reps: ", resp);
 
-            console.log(tx);
             alert("Zugriff erfolgreich gespeichert!");
         } catch (error) {
             console.error("Fehler bei grantMultiAccess:", error);
@@ -244,7 +323,7 @@ function DoctorDetails(props: AddressProps) {
 
     const revokeAccess = async (doc: typeof documents.$inferSelect) => {
         try {
-            const { contract, _signer } = await getContract("patientenakte");
+            const { contract } = await getContract("patientenakte");
             if (!contract) return;
 
             console.log(`Dokument "${doc.name}" (id: ${doc.id}) wird für ${value} entzogen...`);
@@ -304,7 +383,7 @@ function DoctorDetails(props: AddressProps) {
             {/* Dokumentenbereich */}
             <div className="doctorsDetails-documents-container">
                 <h3>Freigegebene Dokumente</h3>
-                {sharedDocuments.length > 0 ? (
+                {sharedDocumentsF.length > 0 ? (
                     <ul className="shared-documents-list">
                         {sharedDocumentsF.map((doc, index) => (
                             <li key={index}>
