@@ -5,6 +5,9 @@ import "../../Styles/DoctorsDetails.css";
 import { getContract } from "../../contractConfig";
 import { doctors, documents, releasedDocuments } from '../../db/schema';
 import { encrypt } from '@metamask/eth-sig-util';
+import * as pdfjsLib from "pdfjs-dist";
+import "pdfjs-dist/build/pdf.worker.mjs";
+import jsPDF from "jspdf";
 
 type AddressProps = {
     patientAddress: string;
@@ -39,18 +42,66 @@ function DoctorDetails(props: AddressProps) {
                 setSharedDocuments(data);
             });
     }, []);
-    // const hasAccess = async () => {//Bisher nur staatische Testfunktion
-    //     try {
-    //         const teststring = "document1";
-    //         const enc = new TextEncoder();
-    //         const testEntcode = enc.encode(teststring!);
-    //         const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
-    //         const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
-    //         console.log("🔹 Berechneter Document Hash (app_hash):", app_hash);
-    //     } catch (error) {
-    //         console.error("Fehler bei hasAccess:", error);
-    //     }
-    // }
+    const processPDF = async (file: File) => {
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+    
+        reader.onload = async () => {
+          const pdfData = new Uint8Array(reader.result as ArrayBuffer);
+          const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    
+          const processedImages: string[] = [];
+    
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const scale = 1;
+            const viewport = page.getViewport({ scale });
+    
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+    
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+    
+            await page.render({ canvasContext: ctx, viewport }).promise;
+    
+            // Wasserzeichen hinzufügen
+            const watermarkedImage = await addWatermark(canvas, props.patientAddress.toLowerCase());
+            processedImages.push(watermarkedImage);
+          }
+    
+          // Bilder wieder in ein PDF speichern
+          generatePDF(processedImages);
+        };
+      };
+    
+      const addWatermark = (canvas: HTMLCanvasElement, watermarkText: string) => {
+        return new Promise<string>((resolve) => {
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+    
+          ctx.font = "40px Arial";
+          ctx.fillStyle = "rgba(255, 0, 0, 0.3)"; // Transparenter roter Text
+          ctx.rotate(-Math.PI / 6);
+          ctx.fillText(watermarkText, 50, 200);
+          ctx.fillText(watermarkText, 50, 600);
+          resolve(canvas.toDataURL("image/png"));
+        });
+      };
+    
+      const generatePDF = (images: string[]) => {
+        const pdf = new jsPDF();
+    
+        images.forEach((img, index) => {
+          if (index > 0) pdf.addPage();
+          pdf.addImage(img, "PNG", 0, 0, 210, 297);
+        });
+    
+        //pdf.save("processed.pdf");
+        return pdf.output("arraybuffer");
+      };
+
     let unSharedDocuments: typeof documents.$inferSelect[] = [];
     let sharedDocumentsF: typeof documents.$inferSelect[] = [];
     for (let doc of allDocuments) {
