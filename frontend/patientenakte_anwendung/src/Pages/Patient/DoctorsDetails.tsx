@@ -20,7 +20,59 @@ type Access = {
     expiresAt: bigint,
     remainingUses: bigint,
 };
+const processPDF = async (pdfData: Uint8Array, pubDoc: string) => {
 
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+    const processedImages: string[] = [];
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const scale = 1;
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        // Wasserzeichen hinzufügen
+        const watermarkedImage = await addWatermark(canvas, pubDoc);
+        processedImages.push(watermarkedImage);
+    }
+
+    // Bilder wieder in ein PDF speichern
+    return generatePDF(processedImages);
+};
+
+const addWatermark = (canvas: HTMLCanvasElement, watermarkText: string) => {
+    return new Promise<string>((resolve) => {
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        ctx.font = "40px Arial";
+        ctx.fillStyle = "rgba(255, 0, 0, 0.3)"; // Transparenter roter Text
+        ctx.rotate(-Math.PI / 6);
+        ctx.fillText(watermarkText, 50, 200);
+        ctx.fillText(watermarkText, 50, 600);
+        resolve(canvas.toDataURL("image/png"));
+    });
+};
+
+const generatePDF = (images: string[]) => {
+    const pdf = new jsPDF();
+
+    images.forEach((img, index) => {
+        if (index > 0) pdf.addPage();
+        pdf.addImage(img, "PNG", 0, 0, 210, 297);
+    });
+
+    //pdf.save("processed.pdf");
+    return pdf.output("arraybuffer");
+};
 function DoctorDetails(props: AddressProps) {
     const { value } = useParams(); // Holt den PublicKey aus der URL
     const location = useLocation();
@@ -219,8 +271,11 @@ function DoctorDetails(props: AddressProps) {
             const req = { method: "eth_decrypt", params: [`0x${b}`, props.patientAddress] };
             console.log(`decrypting ${selectedDocument.name}-content (${selectedDocument.content})`);
             const decContent: string = await window.ethereum!.request(req);
+
             console.log(decContent.length);
-            // const contentBuffer = (Uint8Array.from(atob(decContent), (m) => m.codePointAt(0)));
+            const contentBuffer = (Uint8Array.from(atob(decContent), (m) => m.codePointAt(0)));
+            const imagePDF = await processPDF(contentBuffer, value!);
+            const imagePDF64 = encBase64(imagePDF!);
             // const contentBufferDecod = new TextDecoder().decode(contentBuffer);
             // console.log(contentBufferDecod);
             // console.log(contentBuffer);
@@ -235,7 +290,7 @@ function DoctorDetails(props: AddressProps) {
             //     }
             // });
             // encBase64(imgPdf.output('arraybuffer'));
-            const decContentBuf = textEnc.encode(decContent);
+            const decContentBuf = textEnc.encode(imagePDF64);
             // console.log(decContentBuf);
 
 
