@@ -92,7 +92,7 @@ contract Patientenakte {
         AccessInfo[] memory returnArray = new AccessInfo[](_documentID.length);
 
         for (uint i=0; i<_documentID.length; i++){
-            Access memory access = accessList[_doctor][i];
+            Access memory access = accessList[_doctor][_documentID[i]];
             if (access.expiresAt == 0 && access.remainingUses==0 && !access.dontExpiresFlag&& !access.noUseLimitFlag){
                 //Es wurde kein Eintrag gefunden also false
                 returnArray[i]= AccessInfo(false,0,0);

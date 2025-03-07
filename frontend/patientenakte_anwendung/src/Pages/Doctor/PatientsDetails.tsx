@@ -3,7 +3,8 @@ import "../../Styles/PatientsDetails.css"
 import { useState, useEffect } from "react";
 import { doctors, documents, releasedDocuments } from '../../db/schema';
 import { getContract } from "../../contractConfig";
-import { Document } from "react-pdf";
+// import { Document } from "react-pdf";
+// import { File } from "react-pdf/src/shared/types.ts";
 
 type AddressProps = {
     address: string;
@@ -19,9 +20,9 @@ const PatientsDetails = (props: AddressProps) => {
     const navigate = useNavigate();
     const { patient } = location.state || {};
     const [sharedDocuments, setSharedDocuments] = useState<RelDoc[]>([]);
-    const [viewedPdf, setViewedPdf] = useState<{ data: Uint8Array } | null>(null);
+    const [viewedPdf, setViewedPdf] = useState<string | null>(null);
     useEffect(() => {
-        fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: patient!.id.toLowerCase(), doctor: props.address.toLowerCase() }).toString())
+        fetch(`/api/released_documents_for_small/doctor_patient?` + new URLSearchParams({ patient: patient!.id.toLowerCase(), doctor: props.address.toLowerCase() }).toString())
             .then((r) => r.json())
             .then((data) => {
                 console.log(data);
@@ -65,10 +66,10 @@ const PatientsDetails = (props: AddressProps) => {
                 Uint8Array.from(atob(rDoc.name), (m) => m.codePointAt(0))
             );
             const st = new TextDecoder().decode(decRes2);
-            const decRes5 = Uint8Array.from(atob(st), (m) => m.codePointAt(0));
+            const decRes5 = Uint8Array.from(atob(st), (m) => m.codePointAt(0)).buffer;
             // const st2 = new TextDecoder().decode(decRes4);
             // const data = new Uint8Array(decRes2)
-            setViewedPdf({ data: st });
+            setViewedPdf(st);
             // console.log(viewedPdf);
             console.log(st);
             console.log(decRes5);
@@ -118,7 +119,12 @@ const PatientsDetails = (props: AddressProps) => {
                     </div>
                     <div>
                         {viewedPdf !== null ?
-                            <Document file={viewedPdf} />
+                            <object width="100%" height={400} data={`data:application/pdf;base64,${viewedPdf}`} type="application/pdf" >
+                                <p>
+                                    loading pdf
+                                </p>
+                            </object>
+                            // <Document file={`data:application/pdf;base64,${viewedPdf}`} />
                             : <>
                             </>
                         }

@@ -5,6 +5,8 @@ import "../../Styles/DoctorsDetails.css";
 import { getContract } from "../../contractConfig";
 import { doctors, documents, releasedDocuments } from '../../db/schema';
 import { encrypt } from '@metamask/eth-sig-util';
+// import { convert } from "pdf-img-convert";
+import { jsPDF } from "jspdf";
 
 type AddressProps = {
     patientAddress: string;
@@ -33,7 +35,7 @@ function DoctorDetails(props: AddressProps) {
     const [accessList, setAccessList] = useState<Access[]>([]);
     // const [sharedDocuments, setSharedDocuments] = useState<{ releasedDocuments: typeof releasedDocuments.$inferSelect, documents: typeof documents.$inferSelect }[]>([]);
     const fetchStuff = async () => {
-        const docs: Document[] = await fetch(`/api/documents/patient/${props.patientAddress.toLowerCase()}`)
+        const docs: Document[] = await fetch(`/api/documents/patient_small/${props.patientAddress.toLowerCase()}`)
             .then((r) => r.json());
         console.log(docs);
         if (docs.length == 0) {
@@ -45,10 +47,10 @@ function DoctorDetails(props: AddressProps) {
         const { contract } = await getContract("patientenakte");
         if (!contract) { return; }
 
-        const docIds = docs.map((doc) => doc.id);
+        const docIds = docs.map((doc) => BigInt(doc.id));
         console.log(`checking if doctor: ${value} has access to [${docIds}]`);
         const accessListRet: Access[] = await contract.whoHasAccess(
-            value!,
+            value!.toLowerCase(),
             docIds
         );
         console.log("accessList: ", accessListRet);
@@ -209,20 +211,33 @@ function DoctorDetails(props: AddressProps) {
             );
             const iv = window.crypto.getRandomValues(new Uint8Array(16));
 
-            const a = textEnc.encode(selectedDocument.content);
+            const selDoc: Document[] = await fetch(`/api/documents/${selectedDocument.id}`).then((b) => b.json());
+
+            const a = textEnc.encode(selDoc[0].content);
             const b = Array.from(a).map((n) => n.toString(16).padStart(2, '0')).join('');
             const req = { method: "eth_decrypt", params: [`0x${b}`, props.patientAddress] };
             console.log(`decrypting ${selectedDocument.name}-content (${selectedDocument.content})`);
             const decContent: string = await window.ethereum!.request(req);
             console.log(decContent.length);
-            const decContentBuf = textEnc.encode(decContent);
-            // console.log(decContentBuf);
-
-
             // const contentBuffer = (Uint8Array.from(atob(decContent), (m) => m.codePointAt(0)));
             // const contentBufferDecod = new TextDecoder().decode(contentBuffer);
             // console.log(contentBufferDecod);
             // console.log(contentBuffer);
+            // const pdfImgs = await convert(decContent);
+            // const imgPdf = new jsPDF();
+            // imgPdf.getPageInfo(0).pageContext;
+            // pdfImgs.forEach((img, idx) => {
+            //
+            //     imgPdf.addImage(img, 'PNG', 0, 0, 210, 297);
+            //     if (idx != pdfImgs.length - 1) {
+            //         imgPdf.addPage();
+            //     }
+            // });
+            // encBase64(imgPdf.output('arraybuffer'));
+            const decContentBuf = textEnc.encode(decContent);
+            // console.log(decContentBuf);
+
+
 
             const doc_enc = await window.crypto.subtle.encrypt(
                 { name: "AES-GCM", iv: iv },
