@@ -27,11 +27,10 @@ export default class ReleasedDocumentsController {
       .getDb()
       .select()
       .from(releasedDocuments)
-      .leftJoin(documents, eq(documents.id, releasedDocuments.documentId))
       .where(
         and(
           eq(releasedDocuments.doctorAddress, doctor),
-          eq(documents.patientAddress, patient)
+          eq(releasedDocuments.patientAddress, patient)
         )
       );
     return ctx.response.json(result);
