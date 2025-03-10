@@ -160,9 +160,9 @@ function DoctorDetails(props: AddressProps) {
     let sharedDocumentsF: typeof documents.$inferSelect[] = [];
     for (let i = 0; i < allDocuments.length; ++i) {
         if (accessList[i].access) {
-            sharedDocumentsF.push(allDocuments[0]);
+            sharedDocumentsF.push(allDocuments[i]);
         } else {
-            unSharedDocuments.push(allDocuments[0]);
+            unSharedDocuments.push(allDocuments[i]);
         }
     }
     // for (let doc of allDocuments) {
