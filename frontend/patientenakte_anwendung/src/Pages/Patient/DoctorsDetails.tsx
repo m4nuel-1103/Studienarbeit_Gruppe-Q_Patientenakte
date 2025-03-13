@@ -300,15 +300,16 @@ function DoctorDetails(props: AddressProps) {
                 key,
                 decContentBuf,
             );
-            const name_enc = await window.crypto.subtle.encrypt(
-                { name: "AES-GCM", iv: iv },
-                key,
-                textEnc.encode(selectedDocument.name)
-            );
+            // const name_enc = await window.crypto.subtle.encrypt(
+            //     { name: "AES-GCM", iv: iv },
+            //     key,
+            //     textEnc.encode(selectedDocument.name)
+            // );
             const pKey = await window.ethereum!.request({
                 method: "eth_getEncryptionPublicKey",
                 params: [value]
             });
+            const name_enc = JSON.stringify(encrypt({ data: selectedDocument.name, publicKey: pKey, version: "x25519-xsalsa20-poly1305", }));
             const key_exp = (await exportCryptoKey(key));
             const jsonKey = { k: key_exp, i: Array.from(iv) };
             const jsonKeyString = JSON.stringify(jsonKey);
@@ -341,7 +342,7 @@ function DoctorDetails(props: AddressProps) {
                 documentId: selectedDocument.id,
                 doctorAddress: value!.toLowerCase(),
                 patientAddress: props.patientAddress.toLowerCase(),
-                name: encBase64(name_enc),
+                name: name_enc,
                 content: encBase64(doc_enc),
             };
             const jsonBodyString = JSON.stringify(jsonBody);

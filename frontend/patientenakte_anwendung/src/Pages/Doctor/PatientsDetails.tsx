@@ -21,14 +21,72 @@ const PatientsDetails = (props: AddressProps) => {
     const { patient } = location.state || {};
     const [sharedDocuments, setSharedDocuments] = useState<RelDoc[]>([]);
     const [viewedPdf, setViewedPdf] = useState<string | null>(null);
-    useEffect(() => {
-        fetch(`/api/released_documents_for_small/doctor_patient?` + new URLSearchParams({ patient: patient!.id.toLowerCase(), doctor: props.address.toLowerCase() }).toString())
-            .then((r) => r.json())
-            .then((data) => {
-                console.log(data);
-                setSharedDocuments(data);
-            });
-    }, []);
+    const fetchDocs = async () => {
+        const docs: RelDoc[] = await (await fetch(`/api/released_documents_for_small/doctor_patient?` + new URLSearchParams({ patient: patient!.id.toLowerCase(), doctor: props.address.toLowerCase() }).toString())).json();
+        console.log(docs);
+        const encoder = new TextEncoder();
+        let documentsDecTitle: RelDoc[] = new Array(docs.length);
+        for (let i = 0; i < docs.length; ++i) {
+            const doc = docs[i];
+            console.log(doc);
+
+            const a = encoder.encode(doc.name);
+            const b = Array.from(a).map((n) => n.toString(16).padStart(2, '0')).join('');
+            const req = { method: "eth_decrypt", params: [`0x${b}`, props.address] };
+            console.log(`decrypting ${doc.name} (0x${b})`);
+            const decTitle: string = await window.ethereum!.request(req);
+
+            // const keyBuffer = (Uint8Array.from(atob(decTitle), (m) => m.codePointAt(0)));
+            // const keyBufferDecod = decoder.decode(keyBuffer);
+            console.log(decTitle);
+            // console.log(keyBufferDecod);
+            documentsDecTitle[i] = {
+                id: doc.id,
+                name: decTitle,
+                doctorAddress: doc.doctorAddress,
+                content: doc.content,
+                documentId: doc.documentId,
+                patientAddress: doc.patientAddress,
+            };
+        }
+        setSharedDocuments(documentsDecTitle);
+    };
+    useEffect(() => { fetchDocs(); }, []);
+    // useEffect(() => {
+    //     fetch(`/api/released_documents_for_small/doctor_patient?` + new URLSearchParams({ patient: patient!.id.toLowerCase(), doctor: props.address.toLowerCase() }).toString())
+    //         .then((r) => r.json())
+    //         .then((data) => {
+    //             console.log(data);
+    //             const encoder = new TextEncoder();
+    //             let documentsDecTitle: RelDoc[] = new Array(data.length);
+    //             for (let i = 0; i < data.length; ++i) {
+    //                 const doc = data[i];
+    //                 console.log(doc);
+    //
+    //                 const a = encoder.encode(doc.name);
+    //                 const b = Array.from(a).map((n) => n.toString(16).padStart(2, '0')).join('');
+    //                 const req = { method: "eth_decrypt", params: [`0x${b}`, props.patientAddress] };
+    //                 console.log(`decrypting ${doc.name} (0x${b})`);
+    //                 const decTitle: string = await window.ethereum!.request(req);
+    //
+    //                 // const keyBuffer = (Uint8Array.from(atob(decTitle), (m) => m.codePointAt(0)));
+    //                 // const keyBufferDecod = decoder.decode(keyBuffer);
+    //                 console.log(decTitle);
+    //                 // console.log(keyBufferDecod);
+    //                 documentsDecTitle[i] = {
+    //                     id: doc.id,
+    //                     name: decTitle,
+    //                     patientAddress: doc.patientAddress,
+    //                     content: doc.content,
+    //                 };
+    //             }
+    //             data.map((doc) => {
+    //
+    //             });
+    //             setSharedDocuments(data);
+    //         });
+    // }, []);
+
     const fetchDoc = async (doc: RelDoc) => {
         try {
             const { contract, signer } = await getContract("patientenakte"); //signer falls man ihn mal braucht
@@ -60,11 +118,11 @@ const PatientsDetails = (props: AddressProps) => {
                 symKey,
                 Uint8Array.from(atob(rDoc.content), (m) => m.codePointAt(0))
             );
-            const decRes4 = await window.crypto.subtle.decrypt(
-                { name: "AES-GCM", iv: iv },
-                symKey,
-                Uint8Array.from(atob(rDoc.name), (m) => m.codePointAt(0))
-            );
+            // const decRes4 = await window.crypto.subtle.decrypt(
+            //     { name: "AES-GCM", iv: iv },
+            //     symKey,
+            //     Uint8Array.from(atob(rDoc.name), (m) => m.codePointAt(0))
+            // );
             const st = new TextDecoder().decode(decRes2);
             const decRes5 = Uint8Array.from(atob(st), (m) => m.codePointAt(0)).buffer;
             // const st2 = new TextDecoder().decode(decRes4);
@@ -73,8 +131,8 @@ const PatientsDetails = (props: AddressProps) => {
             // console.log(viewedPdf);
             console.log(st);
             console.log(decRes5);
-            console.log(decRes4);
-            console.log(new TextDecoder().decode(decRes4));
+            // console.log(decRes4);
+            // console.log(new TextDecoder().decode(decRes4));
             // console.log(st2);
         } catch (error) {
             console.log(`fetchDoc error: ${error}`, error);
