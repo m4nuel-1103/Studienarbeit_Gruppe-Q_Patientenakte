@@ -19,6 +19,13 @@ function Doctors() {
             });
     }, []);
 
+    useEffect(() => {
+        const storedDoctors = localStorage.getItem("allDoctors");
+        if(storedDoctors){
+            setAllDoctors(JSON.parse(storedDoctors));
+        }
+    }, [])
+
     const navigate = useNavigate();
 
     const addDoctor = () => {
@@ -45,10 +52,9 @@ function Doctors() {
 
         if (!isInList) {
             // Speichere das gesamte Objekt `{ name, value }` statt nur `value`
-            setAllDoctors([
-                ...allDoctors,
-                { name: matchingDoctor.name, id: matchingDoctor.id },
-            ]);
+            const updatedDoctors = [...allDoctors, {name: matchingDoctor.name, id: matchingDoctor.id}];
+            setAllDoctors(updatedDoctors);
+            localStorage.setItem("allDoctors", JSON.stringify(updatedDoctors));
             setDoctorInput("");
             setErrorMessage("");
         } else {
@@ -57,7 +63,10 @@ function Doctors() {
     };
 
     const removeDoctor = (doctorValue: string) => {
-        setAllDoctors(allDoctors.filter((doctor) => doctor.id !== doctorValue));
+        const updatedDoctors = allDoctors.filter((doctor) => doctor.id !== doctorValue);
+        setAllDoctors(updatedDoctors);
+
+        localStorage.setItem("allDoctors", JSON.stringify(updatedDoctors));
 
         if (selectedDoctor === doctorValue) {
             setSelectedDoctor("");
