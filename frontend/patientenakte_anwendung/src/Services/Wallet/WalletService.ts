@@ -40,7 +40,7 @@ export const checkWallet = async (): Promise<string | null> => {
       }
 
       console.log("Patientenakte-Adresse: ", tx);
-      return tx; // ✅ Return the record address
+      return patientenAdresse;
     } catch (fetchError) {
       console.error("Fehler beim Abrufen der Patientenakte:", fetchError);
       return null;
