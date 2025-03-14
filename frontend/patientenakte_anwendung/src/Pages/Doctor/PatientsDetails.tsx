@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import "../../Styles/PatientsDetails.css"
 import { useState, useEffect } from "react";
-import { doctors, documents, releasedDocuments } from '../../db/schema';
+import { releasedDocuments } from '../../db/schema';
 import { getContract } from "../../contractConfig";
 
 type AddressProps = {
@@ -9,37 +9,64 @@ type AddressProps = {
 };
 
 type RelDoc = typeof releasedDocuments.$inferSelect;
-type PDoc = typeof documents.$inferSelect;
-type ComDoc = { releasedDocuments: RelDoc, documents: PDoc };
 
 const PatientsDetails = (props: AddressProps) => {
     // Zugriff auf die Patientendaten über die Route
     const location = useLocation();
     const navigate = useNavigate();
     const { patient } = location.state || {};
-    const [sharedDocuments, setSharedDocuments] = useState<ComDoc[]>([]);
-    useEffect(() => {
-        fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: patient!.id.toLowerCase(), doctor: props.address.toLowerCase() }).toString())
-            .then((r) => r.json())
-            .then((data) => {
-                console.log(data);
-                setSharedDocuments(data);
-            });
-    }, []);
-    const fetchDoc = async (doc: ComDoc) => {
+    const [sharedDocuments, setSharedDocuments] = useState<RelDoc[]>([]);
+    const [viewedPdf, setViewedPdf] = useState<string | null>(null);
+    const fetchDocs = async () => {
+        const docs: RelDoc[] = await (
+            await fetch(
+                `/api/released_documents_for_small/doctor_patient?` + new URLSearchParams(
+                    {
+                        patient: patient!.id.toLowerCase(),
+                        doctor: props.address.toLowerCase()
+                    }
+                ).toString()
+            )
+        ).json();
+        console.log(docs);
+        const encoder = new TextEncoder();
+        let documentsDecTitle: RelDoc[] = new Array(docs.length);
+        for (let i = 0; i < docs.length; ++i) {
+            const doc = docs[i];
+            const docNameEncoded = encoder.encode(doc.name);
+            const docNameHexEnc = Array.from(docNameEncoded).map((n) => n.toString(16).padStart(2, '0')).join('');
+            const req = { method: "eth_decrypt", params: [`0x${docNameHexEnc}`, props.address] };
+            console.log(`decrypting ${doc.name} (0x${docNameHexEnc})`);
+            const decTitle: string = await window.ethereum!.request(req);
+            console.log(decTitle);
+            documentsDecTitle[i] = {
+                id: doc.id,
+                name: decTitle,
+                doctorAddress: doc.doctorAddress,
+                content: doc.content,
+                documentId: doc.documentId,
+                patientAddress: doc.patientAddress,
+            };
+        }
+        setSharedDocuments(documentsDecTitle);
+    };
+    useEffect(() => { fetchDocs(); }, []);
+
+    const fetchDoc = async (doc: RelDoc) => {
         try {
             const { contract, signer } = await getContract("patientenakte"); //signer falls man ihn mal braucht
             console.log(signer);
             console.log(contract);
             const enc = new TextEncoder();
             if (!contract) { console.error("no contract"); return; }
-            console.log("doc-id: ", doc.documents.id);
-            const hasAc = await contract.hasAccess(BigInt(doc.documents.id));
-            if (!hasAc) return;
-            const txWrite = await contract.useAccessWrite(BigInt(doc.documents.id));
+            console.log("doc-id: ", doc.documentId);
+            const hasAc = await contract.hasAccess(BigInt(doc.documentId));
+            console.log(hasAc);
+            if (!hasAc.access) return;
+            const txWrite = await contract.useAccessWrite(BigInt(doc.documentId));
             await txWrite.wait();
-            const tx = await contract.useAccessRead(BigInt(doc.documents.id));
-            const rDocA: RelDoc[] = await fetch(`/api/released_documents/${doc.releasedDocuments.id}`)
+            const tx = await contract.useAccessRead(BigInt(doc.documentId));
+            const rDocA: RelDoc[] = await fetch(`/api/released_documents/${doc.id}`)
                 .then((r) => r.json());
             if (rDocA.length != 1) return;
             const rDoc = rDocA[0];
@@ -57,7 +84,10 @@ const PatientsDetails = (props: AddressProps) => {
                 Uint8Array.from(atob(rDoc.content), (m) => m.codePointAt(0))
             );
             const st = new TextDecoder().decode(decRes2);
+            const decRes5 = Uint8Array.from(atob(st), (m) => m.codePointAt(0)).buffer;
+            setViewedPdf(st);
             console.log(st);
+            console.log(decRes5);
         } catch (error) {
             console.log(`fetchDoc error: ${error}`, error);
         }
@@ -73,9 +103,7 @@ const PatientsDetails = (props: AddressProps) => {
                     </button>
                     <h1 className="patient-title">Patient: {patient?.name || "Unbekannt"}</h1>
                 </div>
-                {/* Patientenname */}
                 <div className="patient-detail-content">
-                    {/* Alle Informationen */}
                     <div className="patient-info-box">
                         <h2>Alle Informationen zum Patienten</h2>
                         <p>ID: {patient?.id}</p>
@@ -83,21 +111,31 @@ const PatientsDetails = (props: AddressProps) => {
                         <p>Wohnort: {patient?.city}</p>
                         <p>Diagnose: {patient?.diagnosis}</p>
                     </div>
-
-                    {/* Dokumente-Abschnitt */}
                     <div className="documents-section">
                         <h2>Dokumente:</h2>
                         <div className="documents-grid">
                             {sharedDocuments.map((doc) => (
                                 <div
-                                    key={doc.documents.id}
+                                    key={doc.documentId}
                                     onClick={() => fetchDoc(doc)}
                                     className="document-box no-select"
                                 >
-                                    <p>{doc.documents.name}</p>
+                                    <p>{doc.name}</p>
                                 </div>
                             ))}
                         </div>
+                    </div>
+                    <div>
+                        {viewedPdf !== null ?
+                            <object width="100%" height={400} data={`data:application/pdf;base64,${viewedPdf}`} type="application/pdf" >
+                                <p>
+                                    loading pdf
+                                </p>
+                            </object>
+                            // <Document file={`data:application/pdf;base64,${viewedPdf}`} />
+                            : <>
+                            </>
+                        }
                     </div>
                 </div>
             </div>

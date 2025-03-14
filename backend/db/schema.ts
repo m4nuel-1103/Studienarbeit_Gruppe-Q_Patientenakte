@@ -31,14 +31,11 @@ export const patients = pgTable("patients", {
 
 export const doctors = pgTable("doctors", {
   id: text("id").primaryKey(),
-  // id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
-  // address: text("address").notNull(),
 });
 
 export const documents = pgTable("documents", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  // id: varchar("id", { length: 32 }).primaryKey(),
   patientAddress: text("patientAddress").notNull(),
   name: text("name").notNull(),
   content: text("content").notNull(),
@@ -47,8 +44,9 @@ export const documents = pgTable("documents", {
 export const releasedDocuments = pgTable("releasedDocuments", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   documentId: integer("documentId").notNull(),
-  // documentId: varchar("documentId", { length: 32 }).primaryKey(),
   doctorAddress: text("doctorAddress").notNull(),
+  patientAddress: text("patientAddress").notNull(),
+  name: text("name").notNull(),
   content: text("content").notNull(),
 });
 
@@ -95,6 +93,7 @@ export const releasedDocuments = pgTable("releasedDocuments", {
 
 export const patientRel = relations(patients, ({ many }) => ({
   documents: many(documents),
+  releasedDocuments: many(releasedDocuments),
 }));
 export const doctorRel = relations(doctors, ({ many }) => ({
   releasedDocuments: many(releasedDocuments),
@@ -116,5 +115,9 @@ export const releasedDocumentsRel = relations(releasedDocuments, ({ one }) => ({
   doctors: one(doctors, {
     fields: [releasedDocuments.doctorAddress],
     references: [doctors.id],
+  }),
+  patient: one(patients, {
+    fields: [releasedDocuments.patientAddress],
+    references: [patients.id],
   }),
 }));

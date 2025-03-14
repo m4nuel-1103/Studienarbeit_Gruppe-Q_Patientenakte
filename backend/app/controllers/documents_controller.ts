@@ -30,6 +30,19 @@ export default class DocumentsController {
     return response.json(result);
   }
 
+  public async forPatientNoContent({ params, response }: HttpContext) {
+    const result = await DatabaseService
+      .getDb()
+      .select({
+        id: documents.id,
+        patientAddress: documents.patientAddress,
+        name: documents.name,
+      })
+      .from(documents)
+      .where(eq(documents.patientAddress, params.id));
+    return response.json(result);
+  }
+
   public async show({ params, response }: HttpContext) {
     const result = await DatabaseService
       .getDb()
@@ -39,9 +52,10 @@ export default class DocumentsController {
     return response.json(result);
   }
 
-  public async store({ request }: HttpContext) {
+  public async store({ request, response }: HttpContext) {
     const payload = await request.validateUsing(createDocumentValidator);
-    await DatabaseService.getDb().insert(documents).values(payload);
+    const oid = await DatabaseService.getDb().insert(documents).values(payload).then((r) => r.oid);
+    response.ok({ id: oid });
   }
 
   public async delete({ params, response }: HttpContext) {
