@@ -108,7 +108,6 @@ function DoctorDetails(props: AddressProps) {
         );
         console.log("accessList: ", accessListRet);
         const encoder = new TextEncoder();
-        const decoder = new TextDecoder();
         let documentsDecTitle: Document[] = new Array(docs.length);
         for (let i = 0; i < docs.length; ++i) {
             const doc = docs[i];
@@ -135,27 +134,6 @@ function DoctorDetails(props: AddressProps) {
         setAccessList(accessListRet);
     };
     useEffect(() => { fetchStuff(); }, []);
-    // useEffect(() => {
-    //     fetch(`/api/documents/patient/${props.patientAddress.toLowerCase()}`)
-    //         .then((r) => r.json())
-    //         .then((data: Document[]) => {
-    //             console.log(data);
-    //             setDocuments(data);
-    //             getContract("patientenakte")
-    //                 .then(({ contract }) => {
-    //                     if (!contract) { return; }
-    //                     contract.whoHasAccess(value!, allDocuments.map((doc) => doc.id));
-    //                 });
-    //         });
-    // }, []);
-    // useEffect(() => {
-    //     fetch(`/api/released_documents_for/doctor_patient?` + new URLSearchParams({ patient: props.patientAddress.toLowerCase(), doctor: value!.toLowerCase() }).toString())
-    //         .then((r) => r.json())
-    //         .then((data) => {
-    //             console.log(data);
-    //             setSharedDocuments(data);
-    //         });
-    // }, []);
     let unSharedDocuments: typeof documents.$inferSelect[] = [];
     let sharedDocumentsF: typeof documents.$inferSelect[] = [];
     for (let i = 0; i < allDocuments.length; ++i) {
@@ -165,36 +143,6 @@ function DoctorDetails(props: AddressProps) {
             unSharedDocuments.push(allDocuments[i]);
         }
     }
-    // for (let doc of allDocuments) {
-    //     let shared = false;
-    //     for (let sDoc of sharedDocuments) {
-    //         console.log(`comparing ${doc.id} and ${sDoc.documents.id}`);
-    //         if (sDoc.documents.id == doc.id) {
-    //             shared = true;
-    //             sharedDocumentsF.push(doc);
-    //             break;
-    //         }
-    //     }
-    //     if (shared) {
-    //         continue;
-    //     }
-    //     unSharedDocuments.push(doc);
-    // }
-    // console.log(`all: ${allDocuments}\nshared: ${sharedDocuments}\n sharedDocumentsF: ${sharedDocumentsF}\nunshared: ${unSharedDocuments}`);
-    // const unSharedDocuments = allDocuments.filter(async (doc) => {
-    //     const { contract, signer } = await getContract("patientenakte");
-    //     // console.log("Has Access Signer",signer.address);
-    //     if (!contract || !signer) return;
-    //     const tx = await contract.hasAccess(doc.id);
-    //     const allAccess = await contract.accessList(await signer.getAddress(), app_hash);
-    //     console.log("🔹 Zugriffseintrag:", allAccess);
-    //     //const result = await contract.callStatic.hasAccess(1149696269n);
-    //     //console.log("Zugriffserlaubnis Static: ",result);
-    //
-    //     console.log("Has access: ", tx);
-    //
-    // });
-    // const allDocuments = getDocuments();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDocument, setSelectedDocument] = useState<typeof documents.$inferSelect | null>(null);
@@ -276,35 +224,12 @@ function DoctorDetails(props: AddressProps) {
             const contentBuffer = (Uint8Array.from(atob(decContent), (m) => m.codePointAt(0)));
             const imagePDF = await processPDF(contentBuffer, value!);
             const imagePDF64 = encBase64(imagePDF!);
-            // const contentBufferDecod = new TextDecoder().decode(contentBuffer);
-            // console.log(contentBufferDecod);
-            // console.log(contentBuffer);
-            // const pdfImgs = await convert(decContent);
-            // const imgPdf = new jsPDF();
-            // imgPdf.getPageInfo(0).pageContext;
-            // pdfImgs.forEach((img, idx) => {
-            //
-            //     imgPdf.addImage(img, 'PNG', 0, 0, 210, 297);
-            //     if (idx != pdfImgs.length - 1) {
-            //         imgPdf.addPage();
-            //     }
-            // });
-            // encBase64(imgPdf.output('arraybuffer'));
             const decContentBuf = textEnc.encode(imagePDF64);
-            // console.log(decContentBuf);
-
-
-
             const doc_enc = await window.crypto.subtle.encrypt(
                 { name: "AES-GCM", iv: iv },
                 key,
                 decContentBuf,
             );
-            // const name_enc = await window.crypto.subtle.encrypt(
-            //     { name: "AES-GCM", iv: iv },
-            //     key,
-            //     textEnc.encode(selectedDocument.name)
-            // );
             const pKey = await window.ethereum!.request({
                 method: "eth_getEncryptionPublicKey",
                 params: [value]
@@ -363,36 +288,6 @@ function DoctorDetails(props: AddressProps) {
         closeModal();
     };
 
-    const hasAccess = async () => {//Bisher nur statische Testfunktion
-        try {
-            const teststring = "document1";
-            const enc = new TextEncoder();
-            const testEntcode = enc.encode(teststring!);
-            const doc_hash = await window.crypto.subtle.digest("SHA-256", testEntcode);
-            const app_hash = BigInt(new Uint32Array(doc_hash)[0]);
-            console.log("🔹 Berechneter Document Hash (app_hash):", app_hash);
-            const { contract, signer } = await getContract("patientenakte");
-            console.log(contract);
-            // console.log("Has Access Signer",signer.address);
-            if (!contract || !signer) return;
-            const allAccess = await contract.accessList(await signer.getAddress(), app_hash);
-            console.log("🔹 Zugriffseintrag:", allAccess);
-            //const result = await contract.callStatic.hasAccess(1149696269n);
-            //console.log("Zugriffserlaubnis Static: ",result);
-
-            const tx = await contract.hasAccess(1149696269);
-            console.log("Has access: ", tx);
-            //await tx.wait();
-
-
-            //console.log(tx.value);
-            alert("Has Access erfolgreich!");
-        } catch (error) {
-            console.error("Fehler bei hasAccess:", error);
-        }
-
-    }
-
     const revokeAccess = async (doc: typeof documents.$inferSelect) => {
         try {
             const { contract } = await getContract("patientenakte");
@@ -433,7 +328,6 @@ function DoctorDetails(props: AddressProps) {
 
     return (
         <div className="doctorsDetails-container">
-            {/* Linker Bereich: Arzt-Informationen */}
             <div className="doctorsDetails-left">
                 <h2>Arzt-Details</h2>
                 <p>
@@ -444,15 +338,11 @@ function DoctorDetails(props: AddressProps) {
                 </p>
             </div>
 
-            {/* Rechter Bereich: Weitere Infos */}
             <div className="doctorsDetails-right">
                 <h3>Zusätzliche Informationen</h3>
                 <p>Hier könnten weitere Daten stehen.</p>
-                {/* Testbutton für Access*/}
-                <button onClick={hasAccess}>Has Access Test </button>
             </div>
 
-            {/* Dokumentenbereich */}
             <div className="doctorsDetails-documents-container">
                 <h3>Freigegebene Dokumente</h3>
                 {sharedDocumentsF.length > 0 ? (
