@@ -16,7 +16,8 @@ const PatientsDetails = (props: AddressProps) => {
     const navigate = useNavigate();
     const { patient } = location.state || {};
     const [sharedDocuments, setSharedDocuments] = useState<RelDoc[]>([]);
-    const [viewedPdf, setViewedPdf] = useState<string | null>(null);
+    // const [viewedPdf, setViewedPdf] = useState<string | null>(null);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const fetchDocs = async () => {
         const docs: RelDoc[] = await (
             await fetch(
@@ -85,9 +86,19 @@ const PatientsDetails = (props: AddressProps) => {
             );
             const st = new TextDecoder().decode(decRes2);
             const decRes5 = Uint8Array.from(atob(st), (m) => m.codePointAt(0)).buffer;
-            setViewedPdf(st);
+            // setViewedPdf(st);
             console.log(st);
             console.log(decRes5);
+            // Hier wird die blobUrl erstellt und PdfUrl zugewiesen
+            const byteCharacters = atob(st);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            setPdfUrl(url);
         } catch (error) {
             console.log(`fetchDoc error: ${error}`, error);
         }
@@ -126,8 +137,8 @@ const PatientsDetails = (props: AddressProps) => {
                         </div>
                     </div>
                     <div>
-                        {viewedPdf !== null ?
-                            <object width="100%" height={400} data={`data:application/pdf;base64,${viewedPdf}`} type="application/pdf" >
+                        {pdfUrl !== null ?
+                            <object width="100%" height={400} data={pdfUrl} type="application/pdf" >
                                 <p>
                                     loading pdf
                                 </p>
