@@ -1,6 +1,6 @@
 .doctors-container {
     display: grid;
-    grid-template-columns: 2fr 1fr; /* Hauptbereich 2/3, Details 1/3 */
+    grid-template-columns: 2fr 1fr; 
     gap: 20px;
     padding: 20px;
     background: white;
@@ -34,7 +34,7 @@
   .trash-icon {
     color: red;
     cursor: pointer;
-    font-size: 20px; /* Größe des Icons */
+    font-size: 20px; 
     margin-left: 10px;
   }
   

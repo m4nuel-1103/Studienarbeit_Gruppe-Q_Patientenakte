@@ -17,9 +17,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleRole, isDoc, account, setAccount 
     );
   }, [isDoc]);
 
-  // Disconnect Wallet Function
   const disconnectWallet = () => {
-    setAccount(null); // Clear the connected account
+    setAccount(null); 
     console.log("Wallet erfolgreich getrennt");
   };
 

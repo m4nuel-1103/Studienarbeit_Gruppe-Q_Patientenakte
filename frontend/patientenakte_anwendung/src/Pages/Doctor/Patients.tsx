@@ -7,30 +7,38 @@ const Patients = () => {
     const [allPatients, setAllPatients] = useState<
         typeof patients.$inferInsert[]
     >([]);
+
+    const [originalPatients, setOriginalPatients] = useState<typeof patients.$inferInsert[]>([]);
+
     const [patientInput, setPatientInput] = useState("");
     useEffect(() => {
         fetch("/api/patients")
             .then((r) => r.json())
             .then((data) => {
                 setAllPatients(data);
+                setOriginalPatients(data);
             });
     }, []);
 
     const navigate = useNavigate();
 
-    // Filterfunktion für die Suche
     const handleSearch = () => {
-        // const filteredPatients = allPatientsData.filter((patient) =>
-        //     String(patient.id).toLowerCase().includes(patientInput.toLowerCase())
-        // );
-        // setAllPatients(filteredPatients);
+        if (!patientInput) {
+            setAllPatients(originalPatients);
+            return;
+        }
+
+        const filteredPatients = originalPatients.filter((patient) =>
+            String(patient.id).includes(patientInput)
+        );
+
+        setAllPatients(filteredPatients);
     };
 
     return (
         <div className="patients-container">
             <h2>Patienten-Liste</h2>
 
-            {/* Suchfunktion */}
             <div className="search-container">
                 <input
                     type="text"
@@ -41,7 +49,6 @@ const Patients = () => {
                 <button onClick={handleSearch}>Suchen</button>
             </div>
 
-            {/* Tabelle für die Patientenanzeige */}
             <div className="table-container">
                 <table className="patients-table">
                     <thead>
@@ -54,7 +61,7 @@ const Patients = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {(allPatients /* > 0 ? allPatients : allPatientsData */).map(
+                        {(allPatients).map(
                             (patient) => (
                                 <tr key={patient.id}>
                                     <td>{patient.id}</td>

@@ -1,6 +1,6 @@
 .doctorsDetails-container {
   display: grid;
-  grid-template-columns: 1fr 2fr; /* Arztinfos links, Inhalt rechts */
+  grid-template-columns: 1fr 2fr; 
   gap: 20px;
   padding: 20px;
   background: white;
@@ -15,7 +15,7 @@
 }
 
 .doctorsDetails-documents-container {
-  grid-column: 1 / -1; /* Nimmt die gesamte Breite unterhalb der Hauptbereiche ein */
+  grid-column: 1 / -1; 
   background: #e0e0e0;
   padding: 20px;
   border-radius: 8px;
@@ -60,7 +60,7 @@ li {
 
 .modal-input-group {
   display: flex;
-  flex-direction: column; /* Überschriften oben, Eingabefelder unten */
+  flex-direction: column; 
   gap: 5px;
   margin: 10px 0;
 }
@@ -68,13 +68,13 @@ li {
 .input-row {
   display: flex;
   align-items: center;
-  gap: 10px; /* Abstand zwischen Input und Checkbox */
+  gap: 10px; 
 }
 
 .input-row input[type="date"],
 .input-row input[type="number"] {
-  flex: 1; /* Beide Felder erhalten den gleichen Platz */
-  min-width: 150px; /* Mindestgröße */
+  flex: 1; 
+  min-width: 150px;
   padding: 5px;
 }
 
@@ -124,7 +124,7 @@ li {
 
 .shared-documents-list li {
   display: flex;
-  justify-content: space-between; /* Pushes items apart */
+  justify-content: space-between; 
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid #ccc;

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import "../../Styles/Doctors.css";
 import { doctors } from '../../db/schema';
-// import { getPublicKeys } from "../../Services/GetData";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 

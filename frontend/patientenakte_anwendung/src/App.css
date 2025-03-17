@@ -1,7 +1,7 @@
 .app-container {
   display: grid;
-  grid-template-columns: 1fr minmax(1000px, 3fr) 1fr; /* 1fr links, 3fr Mitte, 1fr rechts */
-  grid-template-rows: auto 1fr auto; /* Header, Main, Footer */
+  grid-template-columns: 1fr minmax(1000px, 3fr) 1fr; 
+  grid-template-rows: auto 1fr auto; 
   grid-template-areas:
     "left header right"
     "left main right"
@@ -34,8 +34,8 @@
   background: white;
   padding: 20px;
   display: flex;
-  justify-content: center; /* Zentriert den Inhalt horizontal */
-  min-width: 500px; /* Mindestbreite für Inhalte */
+  justify-content: center; 
+  min-width: 500px; 
 }
 
 .right-space {
@@ -58,7 +58,7 @@
 }
 
 .login-container {
-  grid-area: main; /* Stellt sicher, dass es im richtigen Grid-Bereich bleibt */
+  grid-area: main; 
   display: flex;
   flex-direction: column;
   justify-content: center;

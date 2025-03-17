@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../../Styles/DoctorsDetails.css";
-// import { getDocuments } from "../../Services/GetData";
 import { getContract } from "../../contractConfig";
 import { doctors, documents, releasedDocuments } from '../../db/schema';
 import { encrypt } from '@metamask/eth-sig-util';

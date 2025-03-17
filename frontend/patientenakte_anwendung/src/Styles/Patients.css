@@ -1,4 +1,3 @@
-/* Gesamtcontainer */
 .patients-container {
     width: 100%;
     padding: 40px;
@@ -11,7 +10,6 @@
     margin-bottom: 20px;
   }
   
-  /* Suchfeld */
   .search-container {
     display: flex;
     justify-content: center;
@@ -39,7 +37,6 @@
     background-color: #005a99;
   }
   
-  /* Tabelle */
   .table-container {
     overflow-x: auto;
     background-color: white;
@@ -68,7 +65,6 @@
     background-color: #f1f1f1;
   }
   
-  /* Aktionen */
   .details-btn {
     background-color: #28a745;
     color: white;

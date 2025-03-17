@@ -11,12 +11,10 @@ type AddressProps = {
 type RelDoc = typeof releasedDocuments.$inferSelect;
 
 const PatientsDetails = (props: AddressProps) => {
-    // Zugriff auf die Patientendaten über die Route
     const location = useLocation();
     const navigate = useNavigate();
     const { patient } = location.state || {};
     const [sharedDocuments, setSharedDocuments] = useState<RelDoc[]>([]);
-    // const [viewedPdf, setViewedPdf] = useState<string | null>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const fetchDocs = async () => {
         const docs: RelDoc[] = await (
@@ -143,7 +141,6 @@ const PatientsDetails = (props: AddressProps) => {
                                     loading pdf
                                 </p>
                             </object>
-                            // <Document file={`data:application/pdf;base64,${viewedPdf}`} />
                             : <>
                             </>
                         }
