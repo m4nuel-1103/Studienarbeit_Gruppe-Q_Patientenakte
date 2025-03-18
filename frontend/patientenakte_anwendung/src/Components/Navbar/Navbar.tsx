@@ -26,13 +26,17 @@ const Navbar: React.FC<NavbarProps> = ({ toggleRole, isDoc, account, setAccount 
     <div className={`navbar-container ${isDoc ? "doc" : ""}`}>
       <div className="navbar-logo">
         <h1>Patientenakte</h1>
-        {account}
+        <div>
+          <p>
+            {account}
+          </p>
         <button
               onClick={disconnectWallet}
               className="disconnect-button"
-            >
+              >
               Trennen
             </button>
+        </div>
       </div>
       <div className="navbar-links">
         <nav className="navbar">
