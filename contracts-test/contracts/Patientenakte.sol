@@ -74,12 +74,10 @@ contract Patientenakte {
         if(access.dontExpiresFlag &&  !access.noUseLimitFlag){
             return AccessInfo((access.remainingUses > 0),0,access.remainingUses);
             //zeitlich unendlich beschraenkt auf Anzahl
-            //sollen wir hier noch den Eintrag löschen?
         }
         if (!access.dontExpiresFlag && access.noUseLimitFlag){
             return AccessInfo((access.expiresAt >block.timestamp),access.expiresAt,0);
             //zeitlich beschraenkt mit unendlich Anzahl
-            //sollen wir hier noch den Eintrag löschen?
         }
         return AccessInfo((access.expiresAt > block.timestamp && access.remainingUses > 0), access.expiresAt, access.remainingUses);
         //zeitlich und Anzahl Zugriffe beschraenkt
@@ -107,13 +105,11 @@ contract Patientenakte {
                 returnArray[i]= AccessInfo((access.remainingUses > 0),0,access.remainingUses);
                 continue;
                 //zeitlich unendlich beschraenkt auf Anzahl
-                //sollen wir hier noch den Eintrag löschen?
             }
             if (!access.dontExpiresFlag && access.noUseLimitFlag){
                 returnArray[i] =AccessInfo((access.expiresAt > block.timestamp),access.expiresAt,0);
                 continue;
                 //zeitlich beschraenkt mit unendlich Anzahl
-                //sollen wir hier noch den Eintrag löschen?
             }
             returnArray[i] =AccessInfo((access.expiresAt > block.timestamp && access.remainingUses > 0),access.expiresAt,access.remainingUses);
             //zeitlich und Anzahl Zugriffe beschraenkt

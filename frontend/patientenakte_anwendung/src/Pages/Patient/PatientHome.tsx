@@ -46,7 +46,9 @@ async function encryptAndUploadPDF(address: string, fileContents: Uint8Array, fi
         },
         body: JSON.stringify(docUpload),
     }).then((b) => { console.log(b); return b.json(); });
-    console.log("file-upload: ", resp);
+    //console.log("file-upload: ", resp);
+    alert("Datei erfolgreich hochgeladen!");
+    window.location.reload();
 }
 
 function PatientHome(props: AddressProps) {
@@ -73,15 +75,24 @@ function PatientHome(props: AddressProps) {
         console.log(file);
         await encryptAndUploadPDF(props.patientAddress, new Uint8Array(await file.arrayBuffer()), file.name);
     };
-
+    useEffect(() => {
+        const block = (e) => {
+            if (e.ctrlKey && e.key === "p" || e.ctrlKey && e.key === "s") {
+                e.preventDefault();
+                alert("Drucken/ speichern deaktiviert!");
+            }
+        };
+        document.addEventListener("keydown", block);
+        return () => document.removeEventListener("keydown", block);
+    }, []);
     return (
-        <div style={{ padding: 20 }}>
+        <div  style={{ padding: 20}}>
             <h2>PDF Hochladen</h2>
             <input type="file" accept="application/pdf" onChange={handleFileChange} />
             {previewURL && (
-                <div>
+                <div onContextMenu={(e) => e.preventDefault()}>
                     <p>Vorschau:</p>
-                    <iframe src={previewURL} width="100%" height="400px" title="PDF Vorschau"></iframe>
+                    <iframe src={previewURL} width="100%" height="400px" title="PDF Vorschau" style={{ pointerEvents: "none" }}></iframe>
                 </div>
             )}
             <button onClick={handleUpload} style={{ marginTop: 10 }}>Hochladen</button>

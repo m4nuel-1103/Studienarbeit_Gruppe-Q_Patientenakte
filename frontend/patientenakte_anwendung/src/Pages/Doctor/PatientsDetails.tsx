@@ -1,8 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import "../../Styles/PatientsDetails.css"
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { releasedDocuments } from '../../db/schema';
 import { getContract } from "../../contractConfig";
+import * as pdfjs from "pdfjs-dist";
+import "pdfjs-dist/build/pdf.worker.mjs";
 
 type AddressProps = {
     address: string;
@@ -136,11 +138,7 @@ const PatientsDetails = (props: AddressProps) => {
                     </div>
                     <div>
                         {pdfUrl !== null ?
-                            <object width="100%" height={400} data={pdfUrl} type="application/pdf" >
-                                <p>
-                                    loading pdf
-                                </p>
-                            </object>
+                            <PDFCanvasViewer pdfUrl={pdfUrl} />
                             : <>
                             </>
                         }
@@ -150,6 +148,56 @@ const PatientsDetails = (props: AddressProps) => {
         </>
     );
 };
+const PDFCanvasViewer = ({ pdfUrl }) => {
+    const [numPages, setNumPages] = useState(0);
+    const [pages, setPages] = useState([]);
+    const viewerRef = useRef(null);
+
+    useEffect(() => {
+        if (pdfUrl) {
+            const loadingTask = pdfjs.getDocument(pdfUrl);
+            loadingTask.promise.then(pdf => {
+                setNumPages(pdf.numPages);
+                const pagePromises = [];
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    pagePromises.push(
+                        pdf.getPage(i).then(page => {
+                            const viewport = page.getViewport({ scale: 1.5 });
+                            const canvas = document.createElement("canvas");
+                            const context = canvas.getContext("2d");
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            return page.render({ canvasContext: context, viewport }).promise.then(() => canvas);
+                        })
+                    );
+                }
+
+                Promise.all(pagePromises).then(setPages);
+            });
+        }
+    }, [pdfUrl]);
+
+    return (
+        <div 
+            ref={viewerRef} 
+            style={{ 
+                maxHeight: "800px", 
+                overflowY: "auto", 
+                border: "1px solid #ccc", 
+                padding: "10px" 
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+        >
+            {pages.map((canvas, index) => (
+                <div key={index} style={{ marginBottom: "10px" }}>
+                    {canvas && <canvas ref={(el) => el?.replaceWith(canvas)} />}
+                </div>
+            ))}
+        </div>
+    );
+};
+
 
 export default PatientsDetails;
 
