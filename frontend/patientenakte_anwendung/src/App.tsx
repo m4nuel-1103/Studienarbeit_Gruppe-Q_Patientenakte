@@ -12,11 +12,19 @@ import {
 
 
 const App = () => {
-    const [isDoc, setIsDoc] = useState(false); // Default role: Patient
+    const [isDoc, setIsDoc] = useState<boolean>(() => {
+        // Beim ersten Laden den Wert aus localStorage abrufen
+        const storedRole = localStorage.getItem("isDoc");
+        return storedRole ? JSON.parse(storedRole) : false; // Falls kein Wert vorhanden ist, default auf `false`
+    });
     const [account, setAccount] = useState<string | null>(null); // Wallet address
 
     const toggleRole = () => {
-        setIsDoc(!isDoc);
+        setIsDoc((prev) => {
+            const newRole = !prev;
+            localStorage.setItem("isDoc", JSON.stringify(newRole)); // Wert in localStorage speichern
+            return newRole;
+        });
     };
 
     // Listen for account changes
