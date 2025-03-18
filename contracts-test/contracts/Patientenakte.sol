@@ -8,11 +8,10 @@ contract Patientenakte {
         uint expiresAt;  
         uint remainingUses;
         bool dontExpiresFlag; //Zeigt an ob zeitlich begrenzt  True heißt  Nein es ist nicht zeitlich begrenzt
-        bool noUseLimitFlag;    //Zeigt an ob auf Anzahl begrenzt True heißt hier nicht begrenzt auf häufigkeit
+        bool noUseLimitFlag;    //Zeigt an ob auf Anzahl begrenzt True heißt hier nicht begrenzt auf Häufigkeit
         string encryptedKey; // Verschlüsselter AES-Schlüssel
         uint lastUseAccess; //Wird sich gemerkt beim useAccess damit die nächsten 15 min kein 2 Zugriff abgezogen wird 
 
-        //enctyped Key anderer Datentyp?
     }
     // Mapping: (Arzt-Adresse => (Dokument-ID => Zugriffsdaten))
     mapping(address => mapping(uint256 => Access)) public accessList;
@@ -28,11 +27,9 @@ contract Patientenakte {
 
     function grantMultiAccess(address[] memory _doctors, uint256[] memory _documentIDs, uint _expiresAt, uint _remainingUses, bool _dontExpiresFlag, bool _noUseLimitFlag, string[] memory _encryptedKeys) public {
         require(msg.sender == patient, "Nur der Patient kann Zugriff gewaehren");
-        require(_doctors.length>0, "Mindestens ein Arzt uebergeben");//auch im Frontend abfangen...
-        require(_documentIDs.length>0, "Mindestens ein Dokument uebergeben"); //auch im Frontend schon abfangen ...
-        require(_documentIDs.length == _encryptedKeys.length, "Anzahl Keys und Anzahl Dokumente muss passen");//auch im frontend schon abfangen
-        //bzw brauchen wir das überhaupt hier nochmal überprüfen was genau der Key bedeutet aber eigentlich pro Dokument ein Key und dann
-        //bevor dem SEnden mit dem Arzt Key verschlüsseln
+        require(_doctors.length>0, "Mindestens ein Arzt uebergeben");
+        require(_documentIDs.length>0, "Mindestens ein Dokument uebergeben");
+        require(_documentIDs.length == _encryptedKeys.length, "Anzahl Keys und Anzahl Dokumente muss passen");
         if (_dontExpiresFlag){
             //Zeitlich unbegrenzt zugriff
             _expiresAt = 0;
@@ -62,11 +59,15 @@ contract Patientenakte {
             uint256 expiresAt;
             uint256 remainingUses;
         }
-    function hasAccess(uint256 _documentID) public view returns (AccessInfo memory) {//Vielleicht hier einbauen das man wie lange noch zugriff zurückbekommt
+    function hasAccess(uint256 _documentID) public view returns (AccessInfo memory) {
         Access memory access = accessList[msg.sender][_documentID];
         if (access.expiresAt == 0 && access.remainingUses==0 && !access.dontExpiresFlag&& !access.noUseLimitFlag){
             //Es wurde kein Eintrag gefunden also false
             return AccessInfo(false,0,0);
+        }
+        if(access.lastUseAccess + 15*60< block.timestamp){
+            return AccessInfo(true,0,0);
+            // 15 min sind noch nicht abgelaufen
         }
         if(access.dontExpiresFlag && access.noUseLimitFlag){
             return AccessInfo(true,0,0); //Zugriff unendlich
@@ -77,7 +78,7 @@ contract Patientenakte {
         }
         if (!access.dontExpiresFlag && access.noUseLimitFlag){
             return AccessInfo((access.expiresAt >block.timestamp),access.expiresAt,0);
-            //zeitlich beschraenkt mit unendlich Anzahl
+            //zeitlich beschraenkt mit unendlich Anzahl  
         }
         return AccessInfo((access.expiresAt > block.timestamp && access.remainingUses > 0), access.expiresAt, access.remainingUses);
         //zeitlich und Anzahl Zugriffe beschraenkt
@@ -124,18 +125,18 @@ contract Patientenakte {
         
         if(access.dontExpiresFlag &&  !access.noUseLimitFlag){
             require(access.remainingUses > 0,"Keine Zugriffe uebrig");
-            //sollen wir hier noch den Eintrag löschen?
+            //sollen wir hier noch den Eintrag löschen? ==> nicht gemacht da Löschen Kosten verursacht
             access.remainingUses -= 1;
             //zeitlich unendlich beschraenkt auf Anzahl
         }
         if (!access.dontExpiresFlag && access.noUseLimitFlag){
-            //sollen wir hier noch den Eintrag löschen?
+            //sollen wir hier noch den Eintrag löschen? ==> nicht gemacht da Löschen Kosten verursacht
             require(access.expiresAt >block.timestamp, "Zugriffszeitraum abgelaufen");
             //zeitlich beschreankt mit unendlich Anzahl
             
         }
         if(!access.dontExpiresFlag && !access.noUseLimitFlag){
-            //sollen wir hier noch den Eintrag löschen?
+            //sollen wir hier noch den Eintrag löschen? ==> nicht gemacht da Löschen Kosten verursacht
             require(access.expiresAt >block.timestamp && access.remainingUses> 0);
             access.remainingUses -= 1;
              //zeitlich begrenzt
@@ -146,7 +147,7 @@ contract Patientenakte {
     }
     function useAccessRead(uint256 _documentID) public view returns (string memory){
         Access storage access = accessList[msg.sender][_documentID];
-        require(access.expiresAt != 0 || access.remainingUses!=0  || access.dontExpiresFlag || access.noUseLimitFlag, "Kein Eintrag gefunden");
+        require(access.expiresAt != 0 || access.remainingUses!=0 ||access.dontExpiresFlag || access.noUseLimitFlag, "Kein Eintrag gefunden");
         require(access.lastUseAccess + 15*60> block.timestamp, "Ihre 15 min Zugriff sind abgelaufen");
         return access.encryptedKey;
 
@@ -154,10 +155,6 @@ contract Patientenakte {
 
     function revokeAccess(address _doctor, uint256 _documentID) public {
         require(msg.sender ==patient, "Nur Patient darf Berechtigungen entfernen");
-        /*Man koennte hier noch vorher pruefen ob es das Dokument gibt
-        bzw. ob der Arzt überhaupt Zugriff darauf hatte
-        Da aber Solidity kein Fehler wirft wenn es keinen Eintrag gibt ist diese Loesung Gas sparend
-        ==> Nachteil ist nur das es keine Fehlermeldung gibt und den Anwender verwirren koennte */
         delete accessList[_doctor][_documentID];
         emit AccessRevoked(_doctor, _documentID);
     }

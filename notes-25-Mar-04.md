@@ -1,4 +1,0 @@
-- eigene Extension schreiben
-- Authentication mit Metamask + Backend Coockies/Token/Session
-- Wallets hierfür generieren, encrypted JSON
-- 
