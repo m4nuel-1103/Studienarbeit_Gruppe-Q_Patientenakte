@@ -103,7 +103,6 @@ const App = () => {
                     </div>
                 )}
             </div>
-            <footer className="footer">Footer</footer>
         </Router>
     );
 };

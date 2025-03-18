@@ -4,8 +4,7 @@
   grid-template-rows: auto 1fr auto; 
   grid-template-areas:
     "left header right"
-    "left main right"
-    "footer footer footer";
+    "left main right";
   height: 100vh;
 }
 
@@ -46,15 +45,6 @@
   grid-area: right;
   height: 100px;
   background-color: var(--primary-color);
-}
-
-.footer {
-  grid-area: footer;
-  background-color: var(--primary-color);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .login-container {
