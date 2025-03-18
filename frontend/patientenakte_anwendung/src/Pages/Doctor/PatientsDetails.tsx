@@ -1,8 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import "../../Styles/PatientsDetails.css"
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { releasedDocuments } from '../../db/schema';
 import { getContract } from "../../contractConfig";
+import * as pdfjs from "pdfjs-dist";
+import "pdfjs-dist/build/pdf.worker.mjs";
 
 type AddressProps = {
     address: string;
@@ -11,12 +13,10 @@ type AddressProps = {
 type RelDoc = typeof releasedDocuments.$inferSelect;
 
 const PatientsDetails = (props: AddressProps) => {
-    // Zugriff auf die Patientendaten über die Route
     const location = useLocation();
     const navigate = useNavigate();
     const { patient } = location.state || {};
     const [sharedDocuments, setSharedDocuments] = useState<RelDoc[]>([]);
-    // const [viewedPdf, setViewedPdf] = useState<string | null>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const fetchDocs = async () => {
         const docs: RelDoc[] = await (
@@ -60,10 +60,13 @@ const PatientsDetails = (props: AddressProps) => {
             console.log(contract);
             const enc = new TextEncoder();
             if (!contract) { console.error("no contract"); return; }
-            console.log("doc-id: ", doc.documentId);
-            const hasAc = await contract.hasAccess(BigInt(doc.documentId));
-            console.log(hasAc);
-            if (!hasAc.access) return;
+            const hasAc: { access: boolean, expiresAt: bigint, remainingUses: bigint } = await contract.hasAccess(BigInt(doc.documentId));
+            if (!hasAc.access) {
+                window.alert("Ihr Zugriff auf dieses Dokument ist abgelaufen");
+                const resp = await (await fetch(`/api/released_documents/${doc.id}`, { method: "DELETE" })).json();
+                console.log(`deleted document ${doc.id} (${resp})`);
+                return;
+            }
             const txWrite = await contract.useAccessWrite(BigInt(doc.documentId));
             await txWrite.wait();
             const tx = await contract.useAccessRead(BigInt(doc.documentId));
@@ -99,6 +102,11 @@ const PatientsDetails = (props: AddressProps) => {
             const blob = new Blob([byteArray], { type: 'application/pdf' });
             const url = URL.createObjectURL(blob);
             setPdfUrl(url);
+            if (hasAc.remainingUses == 1n) {
+                const resp = await (await fetch(`/api/released_documents/${doc.id}`, { method: "DELETE" })).json();
+                console.log(`deleted document ${doc.id} (${resp})`);
+                return;
+            }
         } catch (error) {
             console.log(`fetchDoc error: ${error}`, error);
         }
@@ -138,12 +146,7 @@ const PatientsDetails = (props: AddressProps) => {
                     </div>
                     <div>
                         {pdfUrl !== null ?
-                            <object width="100%" height={400} data={pdfUrl} type="application/pdf" >
-                                <p>
-                                    loading pdf
-                                </p>
-                            </object>
-                            // <Document file={`data:application/pdf;base64,${viewedPdf}`} />
+                            <PDFCanvasViewer pdfUrl={pdfUrl} />
                             : <>
                             </>
                         }
@@ -153,6 +156,56 @@ const PatientsDetails = (props: AddressProps) => {
         </>
     );
 };
+const PDFCanvasViewer = ({ pdfUrl }) => {
+    const [numPages, setNumPages] = useState(0);
+    const [pages, setPages] = useState([]);
+    const viewerRef = useRef(null);
+
+    useEffect(() => {
+        if (pdfUrl) {
+            const loadingTask = pdfjs.getDocument(pdfUrl);
+            loadingTask.promise.then(pdf => {
+                setNumPages(pdf.numPages);
+                const pagePromises = [];
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    pagePromises.push(
+                        pdf.getPage(i).then(page => {
+                            const viewport = page.getViewport({ scale: 1.5 });
+                            const canvas = document.createElement("canvas");
+                            const context = canvas.getContext("2d");
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            return page.render({ canvasContext: context, viewport }).promise.then(() => canvas);
+                        })
+                    );
+                }
+
+                Promise.all(pagePromises).then(setPages);
+            });
+        }
+    }, [pdfUrl]);
+
+    return (
+        <div 
+            ref={viewerRef} 
+            style={{ 
+                maxHeight: "800px", 
+                overflowY: "auto", 
+                border: "1px solid #ccc", 
+                padding: "10px" 
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+        >
+            {pages.map((canvas, index) => (
+                <div key={index} style={{ marginBottom: "10px" }}>
+                    {canvas && <canvas ref={(el) => el?.replaceWith(canvas)} />}
+                </div>
+            ))}
+        </div>
+    );
+};
+
 
 export default PatientsDetails;
 

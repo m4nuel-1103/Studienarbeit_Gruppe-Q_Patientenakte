@@ -18,7 +18,7 @@ const Login: React.FC<LoginProps> = ({ setAccount }) => {
         method: "eth_requestAccounts",
       });
       setLocalAccount(accounts[0]);
-      setAccount(accounts[0]); // Update global account state
+      setAccount(accounts[0]);
     } catch (error) {
       console.error("Fehler beim Verbinden mit MetaMask:", error);
     }

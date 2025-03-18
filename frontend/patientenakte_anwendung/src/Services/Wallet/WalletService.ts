@@ -25,12 +25,6 @@ export const checkWallet = async (): Promise<string | null> => {
     console.log("Wallet-Adresse: ", patientenAdresse);
     console.log("Contract-Adresse:", contract?.target);
 
-    // Debug: Display available contract methods
-    console.log(
-      "Verfügbare Methoden:",
-      contract.interface.fragments.map((f) => f.name)
-    );
-
     try {
       const tx = await contract.getPatientenakte(patientenAdresse);
 
@@ -70,7 +64,6 @@ export const connectWallet = async (
   }
 };
 
-// Automatically update account on wallet change
 export const checkIfWalletIsConnected = async (
   setAccount: (account: string | null) => void
 ): Promise<void> => {

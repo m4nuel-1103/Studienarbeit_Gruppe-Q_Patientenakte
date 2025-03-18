@@ -1,8 +1,11 @@
 /* Globale Farben im :root definieren */
 :root {
-  --primary-color-p: #007acc;   /* Patient */
-  --primary-color-d: #df5252;   /* Arzt */
-  --primary-color: var(--primary-color-p); /* Standardwert */
+  --primary-color-p: #007acc;
+  /* Patient */
+  --primary-color-d: #df5252;
+  /* Arzt */
+  --primary-color: var(--primary-color-p);
+  /* Standardwert */
 }
 
 
@@ -18,4 +21,10 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+@media print {
+  * {
+    display: none !important;
+  }
 }

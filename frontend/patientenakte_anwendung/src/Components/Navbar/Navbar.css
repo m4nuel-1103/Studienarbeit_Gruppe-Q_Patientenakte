@@ -37,21 +37,18 @@
 .navbar a:hover {
   text-decoration: underline;
 }
-/* Container for switch and labels */
 .role-switch-container {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* Labels styling */
 .role-label {
   font-size: 16px;
   font-weight: bold;
   color: #333;
 }
 
-/* Custom switch styling */
 .switch {
   position: relative;
   display: inline-block;
@@ -90,7 +87,7 @@
 }
 
 input:checked + .slider {
-  background-color: #4caf50; /* Green when Arzt is selected */
+  background-color: #4caf50; 
 }
 
 input:checked + .slider:before {

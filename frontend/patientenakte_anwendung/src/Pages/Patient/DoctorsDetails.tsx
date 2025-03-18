@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../../Styles/DoctorsDetails.css";
-// import { getDocuments } from "../../Services/GetData";
 import { getContract } from "../../contractConfig";
 import { doctors, documents, releasedDocuments } from '../../db/schema';
 import { encrypt } from '@metamask/eth-sig-util';
@@ -53,11 +52,11 @@ const addWatermark = (canvas: HTMLCanvasElement, watermarkText: string) => {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        ctx.font = "40px Arial";
+        ctx.font = "20px Arial";
         ctx.fillStyle = "rgba(255, 0, 0, 0.3)"; // Transparenter roter Text
         ctx.rotate(-Math.PI / 6);
-        ctx.fillText(watermarkText, 50, 200);
-        ctx.fillText(watermarkText, 50, 600);
+        ctx.fillText(watermarkText, -50, 400);
+        ctx.fillText(watermarkText, -150, 700);
         resolve(canvas.toDataURL("image/png"));
     });
 };
@@ -67,7 +66,7 @@ const generatePDF = (images: string[]) => {
 
     images.forEach((img, index) => {
         if (index > 0) pdf.addPage();
-        pdf.addImage(img, "PNG", 0, 0, 210, 297);
+        pdf.addImage(img, "PNG", 10, 10, 0, 0);
     });
 
     //pdf.save("processed.pdf");
@@ -281,6 +280,7 @@ function DoctorDetails(props: AddressProps) {
             console.log("post-reps: ", resp);
 
             alert("Zugriff erfolgreich gespeichert!");
+            // window.location.reload();
         } catch (error) {
             console.error("Fehler bei grantMultiAccess:", error);
         }
@@ -314,6 +314,7 @@ function DoctorDetails(props: AddressProps) {
             }).then((b) => b.json())
             console.log("post-reps: ", resp);
             alert(`Zugriff auf "${doc.name}" erfolgreich entfernt.`);
+            // window.location.reload();
         } catch (error) {
             console.error("Fehler bei revokeAccess:", error);
             alert("Fehler beim Entfernen der Freigabe.");
