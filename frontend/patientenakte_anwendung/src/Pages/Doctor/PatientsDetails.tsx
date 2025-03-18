@@ -62,6 +62,7 @@ const PatientsDetails = (props: AddressProps) => {
             const hasAc: { access: boolean, expiresAt: bigint, remainingUses: bigint } = await contract.hasAccess(BigInt(doc.documentId));
             console.log(hasAc);
             if (!hasAc.access) {
+                window.alert("Ihr Zugriff auf dieses Dokument ist abgelaufen");
                 const resp = await (await fetch(`/api/released_documents/${doc.id}`, { method: "DELETE" })).json();
                 console.log(`deleted document ${doc.id} (${resp})`);
                 return;
