@@ -67,9 +67,18 @@ const PatientsDetails = (props: AddressProps) => {
                 console.log(`deleted document ${doc.id} (${resp})`);
                 return;
             }
-            const txWrite = await contract.useAccessWrite(BigInt(doc.documentId));
-            await txWrite.wait();
-            const tx = await contract.useAccessRead(BigInt(doc.documentId));
+            let tx: string | null = null;
+            try {
+                tx = await contract.useAccessRead(BigInt(doc.documentId));
+            } catch {
+                const txWrite = await contract.useAccessWrite(BigInt(doc.documentId));
+                await txWrite.wait();
+                tx = await contract.useAccessRead(BigInt(doc.documentId));
+            }
+            if (tx === null || tx === undefined) {
+                window.alert("Kein Zugriff");
+                return;
+            }
             const rDocA: RelDoc[] = await fetch(`/api/released_documents/${doc.id}`)
                 .then((r) => r.json());
             if (rDocA.length != 1) return;
@@ -187,13 +196,13 @@ const PDFCanvasViewer = ({ pdfUrl }) => {
     }, [pdfUrl]);
 
     return (
-        <div 
-            ref={viewerRef} 
-            style={{ 
-                maxHeight: "800px", 
-                overflowY: "auto", 
-                border: "1px solid #ccc", 
-                padding: "10px" 
+        <div
+            ref={viewerRef}
+            style={{
+                maxHeight: "800px",
+                overflowY: "auto",
+                border: "1px solid #ccc",
+                padding: "10px"
             }}
             onContextMenu={(e) => e.preventDefault()}
         >
