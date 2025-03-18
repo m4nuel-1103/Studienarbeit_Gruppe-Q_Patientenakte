@@ -3,7 +3,11 @@ import "../../Styles/Patients.css";
 import { useNavigate } from "react-router-dom";
 import { patients } from '../../db/schema';
 
-const Patients = () => {
+type AddressProps = {
+    address: string;
+};
+
+const Patients = (props: AddressProps) => {
     const [allPatients, setAllPatients] = useState<
         typeof patients.$inferInsert[]
     >([]);
@@ -12,7 +16,7 @@ const Patients = () => {
 
     const [patientInput, setPatientInput] = useState("");
     useEffect(() => {
-        fetch("/api/patients")
+        fetch(`/api/patients_doctor/${props.address.toLowerCase()}`)
             .then((r) => r.json())
             .then((data) => {
                 setAllPatients(data);

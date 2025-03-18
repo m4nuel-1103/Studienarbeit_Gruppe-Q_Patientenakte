@@ -14,11 +14,11 @@ export default class PatientsController {
     console.log(params);
     const result = await DatabaseService
       .getDb()
-      .select()
+      .select({ id: patients.id, name: patients.name })
       .from(patients)
-      .innerJoin(documents, eq(patients.id, documents.patientAddress))
-      .innerJoin(releasedDocuments, eq(documents.id, releasedDocuments.documentId))
-      .where(eq(releasedDocuments.doctorAddress, params.id));
+      .innerJoin(releasedDocuments, eq(releasedDocuments.patientAddress, patients.id))
+      .where(eq(releasedDocuments.doctorAddress, params.id))
+      ;
     return response.json(result);
   }
 
