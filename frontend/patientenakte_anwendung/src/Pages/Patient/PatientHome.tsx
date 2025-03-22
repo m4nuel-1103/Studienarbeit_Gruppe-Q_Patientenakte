@@ -92,7 +92,7 @@ function PatientHome(props: AddressProps) {
             {previewURL && (
                 <div onContextMenu={(e) => e.preventDefault()}>
                     <p>Vorschau:</p>
-                    <iframe src={previewURL} width="100%" height="400px" title="PDF Vorschau" style={{ pointerEvents: "none" }}></iframe>
+                    <iframe src={previewURL} width="100%" height="400px" title="PDF Vorschau"></iframe>
                 </div>
             )}
             <button onClick={handleUpload} style={{ marginTop: 10 }}>Hochladen</button>
