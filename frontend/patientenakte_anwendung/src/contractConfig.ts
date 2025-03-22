@@ -18,7 +18,8 @@ declare global {
  * @returns {Promise<ethers.Contract | null>} - Eine Instanz des Contracts oder `null`, falls MetaMask nicht verfügbar ist.
  */
 export const getContract = async (
-  contractName: "patientenakte" | "fabrikPatientenakte"
+  contractName: "patientenakte" | "fabrikPatientenakte",
+  address?: string
 ): Promise<{contract: ethers.Contract | null; signer: ethers.Signer| null}> => {
   if (!window.ethereum) {
     alert("Bitte installiere MetaMask!");
@@ -40,7 +41,8 @@ export const getContract = async (
     if (contractName === "patientenakte") {
       const fabrikContract = new ethers.Contract(FABRIK_CONTRACT_ADDRESS, abiFabrikPatientenakte.abi, signer);
 
-      const userAddress = await signer.getAddress();
+      const userAddress = address || await signer.getAddress();
+      console.log("User Adresse:", userAddress);
       const patientenakteAddress = await fabrikContract.getPatientenakte(userAddress);
       // console.log("Patientenakte Adresse:", patientenakteAddress);
 

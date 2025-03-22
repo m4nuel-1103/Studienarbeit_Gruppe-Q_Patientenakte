@@ -321,12 +321,6 @@ function DoctorDetails(props: AddressProps) {
         }
     };
 
-    // useEffect(() => {
-    //     if (!validDoctor) {
-    //         navigate("/doctors", { replace: true });
-    //     }
-    // }, [validDoctor, navigate]);
-
     return (
         <div className="doctorsDetails-container">
             <div className="doctorsDetails-left">

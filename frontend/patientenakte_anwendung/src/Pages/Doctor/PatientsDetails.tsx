@@ -55,7 +55,7 @@ const PatientsDetails = (props: AddressProps) => {
 
     const fetchDoc = async (doc: RelDoc) => {
         try {
-            const { contract, signer } = await getContract("patientenakte"); //signer falls man ihn mal braucht
+            const { contract, signer } = await getContract("patientenakte", patient!.id); //signer falls man ihn mal braucht
             console.log(signer);
             console.log(contract);
             const enc = new TextEncoder();

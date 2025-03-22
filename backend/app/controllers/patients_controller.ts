@@ -14,7 +14,10 @@ export default class PatientsController {
     console.log(params);
     const result = await DatabaseService
       .getDb()
-      .select({ id: patients.id, name: patients.name })
+      .selectDistinctOn(
+        [patients.id],
+        { id: patients.id, name: patients.name }
+      )
       .from(patients)
       .innerJoin(releasedDocuments, eq(releasedDocuments.patientAddress, patients.id))
       .where(eq(releasedDocuments.doctorAddress, params.id))

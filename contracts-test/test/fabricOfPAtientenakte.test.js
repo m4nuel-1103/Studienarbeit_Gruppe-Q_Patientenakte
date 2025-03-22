@@ -8,19 +8,18 @@ describe("Patientenakte über FabrikPatientenakte", function () {
     beforeEach(async function () {
         [owner, patient, doctor] = await ethers.getSigners();
 
-        // 1️⃣ FabrikPatientenakte deployen
         FabrikPatientenakte = await ethers.getContractFactory("FabrikPatientenakte");
         fabrikContract = await FabrikPatientenakte.deploy();
         await fabrikContract.waitForDeployment();
 
-        // 2️⃣ Neue Patientenakte für `patient` über die Fabrik erstellen
+     
         await fabrikContract.connect(patient).createNewPatientenakte();
 
-        // 3️⃣ Die Adresse der erstellten Patientenakte abrufen
+
         const patientenakteAdresse = await fabrikContract.getPatientenakte(patient.address);
         expect(patientenakteAdresse).to.not.equal(ethers.ZeroAddress);
 
-        // 4️⃣ Patientenakte-Vertrag mit der erhaltenen Adresse verbinden
+
         Patientenakte = await ethers.getContractFactory("Patientenakte");
         patientenakteContract = await Patientenakte.attach(patientenakteAdresse);
     });
