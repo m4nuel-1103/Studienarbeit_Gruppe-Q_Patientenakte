@@ -21,7 +21,7 @@ export const checkWallet = async (): Promise<string | null> => {
       return null;
     }
 
-    const patientenAdresse = await signer.getAddress();
+    const patientenAdresse = (await signer.getAddress()).toLowerCase();
     console.log("Wallet-Adresse: ", patientenAdresse);
     console.log("Contract-Adresse:", contract?.target);
 

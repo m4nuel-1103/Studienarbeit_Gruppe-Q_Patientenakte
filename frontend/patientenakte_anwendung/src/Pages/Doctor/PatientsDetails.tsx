@@ -15,6 +15,7 @@ type RelDoc = typeof releasedDocuments.$inferSelect;
 const PatientsDetails = (props: AddressProps) => {
     const location = useLocation();
     const navigate = useNavigate();
+    const didFetch = useRef(false);
     const { patient } = location.state || {};
     const [sharedDocuments, setSharedDocuments] = useState<RelDoc[]>([]);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -51,7 +52,11 @@ const PatientsDetails = (props: AddressProps) => {
         }
         setSharedDocuments(documentsDecTitle);
     };
-    useEffect(() => { fetchDocs(); }, []);
+    useEffect(() => {
+        if (didFetch.current) return;
+        didFetch.current = true;
+        fetchDocs();
+    }, []);
 
     const fetchDoc = async (doc: RelDoc) => {
         try {

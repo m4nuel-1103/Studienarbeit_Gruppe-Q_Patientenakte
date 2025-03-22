@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../../Styles/DoctorsDetails.css";
 import { getContract } from "../../contractConfig";
@@ -76,6 +76,7 @@ function DoctorDetails(props: AddressProps) {
     const { value } = useParams(); // Holt den PublicKey aus der URL
     const location = useLocation();
     const navigate = useNavigate();
+    const didFetch = useRef(false);
 
     const doctorName = location.state?.doctor.name || "Unbekannt";
     const allDoctors: typeof doctors.$inferSelect[] = location.state?.allDoctors || [];
@@ -132,7 +133,11 @@ function DoctorDetails(props: AddressProps) {
         setDocuments(documentsDecTitle);
         setAccessList(accessListRet);
     };
-    useEffect(() => { fetchStuff(); }, []);
+    useEffect(() => {
+        if (didFetch.current) return;
+        didFetch.current = true;
+        fetchStuff();
+    }, []);
     let unSharedDocuments: typeof documents.$inferSelect[] = [];
     let sharedDocumentsF: typeof documents.$inferSelect[] = [];
     for (let i = 0; i < allDocuments.length; ++i) {
