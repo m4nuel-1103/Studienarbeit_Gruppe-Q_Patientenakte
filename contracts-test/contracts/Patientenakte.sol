@@ -61,12 +61,12 @@ contract Patientenakte {
         }
     function hasAccess(uint256 _documentID) public view returns (AccessInfo memory) {
         Access memory access = accessList[msg.sender][_documentID];
-        if (access.expiresAt == 0 && access.remainingUses==0 && !access.dontExpiresFlag&& !access.noUseLimitFlag){
+        if (access.expiresAt == 0 && access.remainingUses==0 && !access.dontExpiresFlag&& !access.noUseLimitFlag && access.lastUseAccess==0){
             //Es wurde kein Eintrag gefunden also false
             return AccessInfo(false,0,0);
         }
-        if(access.lastUseAccess + 15*60< block.timestamp){
-            return AccessInfo(true,0,0);
+        if(access.lastUseAccess + 15*60> block.timestamp){
+            return AccessInfo(true,access.expiresAt, access.remainingUses);
             // 15 min sind noch nicht abgelaufen
         }
         if(access.dontExpiresFlag && access.noUseLimitFlag){
