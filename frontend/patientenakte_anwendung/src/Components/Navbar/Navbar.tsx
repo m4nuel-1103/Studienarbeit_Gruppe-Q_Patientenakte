@@ -1,6 +1,6 @@
 import "./Navbar.css";
-import { NavLink } from "react-router-dom";
-import { useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useRef } from "react";
 
 interface NavbarProps {
   toggleRole: () => void;
@@ -10,6 +10,8 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ toggleRole, isDoc, account, setAccount }) => {
+  const navigate = useNavigate();
+  const prevAccountRef = useRef<string | null>(null);
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--primary-color",
@@ -17,12 +19,27 @@ const Navbar: React.FC<NavbarProps> = ({ toggleRole, isDoc, account, setAccount 
     );
   }, [isDoc]);
 
-  const disconnectWallet = () => {
-    setAccount(null); 
-    console.log("Wallet erfolgreich getrennt");
+  const handleManualDisconnect = () => {
+    setAccount(null); // Manuelles Trennen
   };
 
-  return (
+  const handleAutoDisconnect = useCallback(() => {
+    console.log("Account wurde gewechselt oder getrennt.");
+    setAccount(null);
+    navigate("/");
+  }, [navigate, setAccount]);
+  
+  
+  // Automatischer Logout bei MetaMask Account-Wechsel
+  useEffect(() => {
+    if (prevAccountRef.current && account && prevAccountRef.current !== account) {
+      handleAutoDisconnect();
+    }
+    prevAccountRef.current = account;
+  }, [account, handleAutoDisconnect]);
+  
+
+  return (    
     <div className={`navbar-container ${isDoc ? "doc" : ""}`}>
       <div className="navbar-logo">
         <h1>Patientenakte</h1>
@@ -31,7 +48,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleRole, isDoc, account, setAccount 
             {account}
           </p>
         <button
-              onClick={disconnectWallet}
+              onClick={handleManualDisconnect}
               className="disconnect-button"
               >
               Trennen

@@ -1,4 +1,3 @@
-import { BrowserRouter as Router } from "react-router-dom";
 import "./App.css";
 import Navbar from "./Components/Navbar/Navbar";
 import DoctorRoutes from "./Services/DoctorRoutes";
@@ -44,7 +43,6 @@ const App = () => {
     }, []);
 
     return (
-        <Router>
             <div className="app-container">
                 {account ? (
                     <>
@@ -103,7 +101,6 @@ const App = () => {
                     </div>
                 )}
             </div>
-        </Router>
     );
 };
 
