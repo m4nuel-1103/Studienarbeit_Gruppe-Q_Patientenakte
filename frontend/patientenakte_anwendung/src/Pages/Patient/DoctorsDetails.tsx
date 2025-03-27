@@ -73,6 +73,7 @@ const generatePDF = (images: string[]) => {
     return pdf.output("arraybuffer");
 };
 function DoctorDetails(props: AddressProps) {
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const { value } = useParams(); // Holt den PublicKey aus der URL
     const location = useLocation();
     const navigate = useNavigate();
@@ -158,12 +159,17 @@ function DoctorDetails(props: AddressProps) {
 
     const openModal = (document: typeof documents.$inferSelect) => {
         setSelectedDocument(document);
-        setExpiryDate(getTodayDate());
+        setExpiryDate(getTomorrowDate());
         setIsModalOpen(true);
     };
 
     const getTodayDate = () => {
         return new Date().toISOString().split("T")[0]; // Heutiges Datum im "YYYY-MM-DD"-Format
+    };
+    const getTomorrowDate = () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split("T")[0]; // "YYYY-MM-DD"
     };
 
     const closeModal = () => {
@@ -187,8 +193,35 @@ function DoctorDetails(props: AddressProps) {
         return encBase64(exported);
     }
 
+    const validShare = () => {
+        if (expiryDate === "unbegrenzt") {
+            return true;
+        }
+        const today = new Date();
+        const selected = new Date(expiryDate);
+
+        if(accessCount < 1){
+            if(isUnlimitedAccess){
+                return true
+            }
+            alert("Anzahl der Zugriffe muss mindestens 1 betragen");
+            return false
+        }
+
+        if (selected > today) {
+            return true;
+        } else {
+            alert("Das Ablaufdatum muss in der Zukunft liegen oder auf 'unbegrenzt' stehen.");
+            return false;
+        }
+    };
 
     const handleShare = async () => {
+
+        if(expiryDate < getTodayDate()){
+            return alert("error");
+        }
+
         const finalExpiryDate = isUnlimitedExpiry ? "0" : expiryDate;
         const finalAccessCount = isUnlimitedAccess ? "0" : accessCount;
         if (selectedDocument === null || selectedDocument === undefined) {
@@ -431,7 +464,12 @@ function DoctorDetails(props: AddressProps) {
 
                         {/* Buttons */}
                         <div className="modal-buttons">
-                            <button onClick={handleShare} className="share-btn">
+                            <button onClick={() => {
+                                    if(validShare()){
+                                        handleShare();
+                                    }
+                                }}
+                                className="share-btn">
                                 Freigeben
                             </button>
                             <button onClick={closeModal} className="cancel-btn">
