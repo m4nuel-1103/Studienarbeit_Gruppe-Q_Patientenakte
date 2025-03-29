@@ -1,5 +1,12 @@
 # Patientenakte
 
+## Über diese Arbeit
+In dieser Arbeit wurden die Anwendbarkeit von Distributed Ledger Technologien
+zum Schutze der Datenhoheit anhand von einer Patientenakte untersucht. Hierzu
+wurden bereits existierenden Technologien evaluiert. Auf diesen Vergleich
+aufbauend wurde eine eigene Lösung erarbeitet und prototypisch umgesetzt. Dieser
+Prototyp hat den Schutz der Datenhoheit erfolgreich demonstriert.
+
 ## Initialisierung
 
 ### Pakete installieren
