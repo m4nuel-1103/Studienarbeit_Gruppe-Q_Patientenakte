@@ -33,7 +33,8 @@ cd backend
 cp .env.example .env
 node ace generate:key
 npx drizzle-kit generate
-npx drizzle-kit push --url postgresql://backu:example@localhost/app  --dialect postgresql --schema db/schema.ts
+npx drizzle-kit push --url postgresql://backu:example@localhost/app  \
+    --dialect postgresql --schema db/schema.ts
 cd ..
 ```
 
@@ -63,8 +64,10 @@ Compiled 2 Solidity files successfully (evm target: XXX).
 dann müssen die Kompilation-Artefakte zum Frontend kopiert werden:
 ```bash
 cd contracts-test
-cp artifacts/contracts/Patientenakte.sol/Patientenakte.json ../frontend/patientenakte_anwendung/src
-cp artifacts/contracts/FabricOfPatientenakte.sol/FabrikPatientenakte.json ../frontend/patientenakte_anwendung/src
+cp artifacts/contracts/Patientenakte.sol/Patientenakte.json \
+    ../frontend/patientenakte_anwendung/src
+cp artifacts/contracts/FabricOfPatientenakte.sol/FabrikPatientenakte.json \
+    ../frontend/patientenakte_anwendung/src
 cd ..
 ```
 Beachten: im `contracts-test` Ordner sein.
@@ -88,9 +91,32 @@ cd frontend/patientenakte_anwendung && npm run dev
 Wenn die Lokale Test-Chain benutzt wird, können folgende Befehle benutzt
 werden, um Test-Patienten und Doktoren in der Datenbank anzulegen:
 ```bash
-curl http://localhost:3000/patients -X 'POST' --data '{"id": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", "name": "Amanda", "diagnosis": "Krebs", "city": "Berlin", "gender": "w", "birthdate": "1998-01-03"}'  -H 'Content-Type: application/json'
-curl http://localhost:3000/doctors -X 'POST' --data '{"id": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", "name": "dr. Sepp"}'  -H 'Content-Type: application/json'
-curl http://localhost:3000/patients -X 'POST' --data '{"id": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", "name": "Sepp", "diagnosis": "Frakturen am Unterarm", "city": "Karlsruhe", "gender": "m", "birthdate": "2000-05-11"}'  -H 'Content-Type: application/json'
+curl http://localhost:3000/patients -X 'POST' \
+    --data '{
+        "id": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "name": "Amanda",
+        "diagnosis": "Krebs",
+        "city": "Berlin",
+        "gender": "w",
+        "birthdate": "1998-01-03"
+    }' \
+    -H 'Content-Type: application/json'
+curl http://localhost:3000/doctors -X 'POST' \
+    --data '{
+        "id": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "name": "dr. Sepp"
+    }' \
+    -H 'Content-Type: application/json'
+curl http://localhost:3000/patients -X 'POST' \
+    --data '{
+        "id": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "name": "Sepp",
+        "diagnosis": "Frakturen am Unterarm",
+        "city": "Karlsruhe",
+        "gender": "m",
+        "birthdate": "2000-05-11"
+    }' \
+    -H 'Content-Type: application/json'
 ```
 Wenn zusätzliche Patienten oder Doktoren angelegt werden, muss darauf geachtet
 werden, dass alle Buchstaben der Adresse kleingeschrieben sind, da sonst mehrere Vergleiche scheitern.
