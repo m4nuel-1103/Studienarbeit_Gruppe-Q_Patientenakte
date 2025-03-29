@@ -11,7 +11,6 @@ contract Patientenakte {
         bool noUseLimitFlag;    //Zeigt an ob auf Anzahl begrenzt True heißt hier nicht begrenzt auf Häufigkeit
         string encryptedKey; // Verschlüsselter AES-Schlüssel
         uint lastUseAccess; //Wird sich gemerkt beim useAccess damit die nächsten 15 min kein 2 Zugriff abgezogen wird 
-
     }
     // Mapping: (Arzt-Adresse => (Dokument-ID => Zugriffsdaten))
     mapping(address => mapping(uint256 => Access)) public accessList;
@@ -54,11 +53,13 @@ contract Patientenakte {
             }
         }
     }
- struct AccessInfo {
-            bool access;
-            uint256 expiresAt;
-            uint256 remainingUses;
-        }
+
+    struct AccessInfo {
+        bool access;
+        uint256 expiresAt;
+        uint256 remainingUses;
+    }
+
     function hasAccess(uint256 _documentID) public view returns (AccessInfo memory) {
         Access memory access = accessList[msg.sender][_documentID];
         if (access.expiresAt == 0 && access.remainingUses==0 && !access.dontExpiresFlag&& !access.noUseLimitFlag && access.lastUseAccess==0){
@@ -116,7 +117,6 @@ contract Patientenakte {
             //zeitlich und Anzahl Zugriffe beschraenkt
             }
             return returnArray;
-        
     }
 
     function useAccessWrite(uint256 _documentID) public {
@@ -145,6 +145,7 @@ contract Patientenakte {
         emit AccessUsed(msg.sender, _documentID,  access.expiresAt,  access.remainingUses);
         access.lastUseAccess=block.timestamp;
     }
+
     function useAccessRead(uint256 _documentID) public view returns (string memory){
         Access storage access = accessList[msg.sender][_documentID];
         require(access.expiresAt != 0 || access.remainingUses!=0 ||access.dontExpiresFlag || access.noUseLimitFlag, "Kein Eintrag gefunden");
