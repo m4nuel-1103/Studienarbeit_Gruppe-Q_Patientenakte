@@ -89,7 +89,7 @@ curl http://localhost:3000/doctors -X 'POST' --data '{"id": "0xf39fd6e51aad88f6f
 curl  http://localhost:3000/patients -X 'POST' --data '{"id": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", "name": "Sepp", "diagnosis": "Frakturen am Unterarm", "city": "Karlsruhe", "gender": "m", "birthdate": "2000-05-11"}'  -H 'Content-Type: application/json'
 ```
 Wenn zusätzliche Patienten oder Doktoren angelegt werden, muss darauf geachtet
-werden, dass alle Buchstaben kleingeschrieben sind, da sonst mehrere Vergleiche scheitern.
+werden, dass alle Buchstaben der Adresse kleingeschrieben sind, da sonst mehrere Vergleiche scheitern.
 
 ### Mögliche Fehler:
 Sind die Ports 5432 (Datenbank), 8545 (Test-Chain), 3000 (Backend) und 5173 (Frontend) frei?
